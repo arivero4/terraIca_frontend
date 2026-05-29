@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Gestión de Inspecciones Fitosanitarias">
+    <title>Login - Sistema de Inspecciones Fitosanitarias</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Side Image -->
+        <div class="login-image">
+            <div class="login-image__content">
+                <h1 class="login-image__title">Sistema de Inspecciones Fitosanitarias</h1>
+                <p class="login-image__subtitle">Gestión integral de inspecciones territoriales</p>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-form">
+            <div class="login-form__card">
+                <div class="login-form__header">
+                    <h1 class="login-form__title">Iniciar Sesión</h1>
+                    <p class="login-form__subtitle">Ingrese sus credenciales</p>
+                </div>
+
+                <!-- Error Alert -->
+                <div class="login-error" id="loginError"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm" novalidate>
+                    <!-- Email -->
+                    <div class="login-form__group">
+                        <label for="email" class="form-label required">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            class="form-control" 
+                            placeholder="correo@ejemplo.com"
+                            required
+                        >
+                        <span class="form-text text-danger" id="emailError"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="login-form__group">
+                        <label for="password" class="form-label required">Contraseña</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-control" 
+                            placeholder="••••••••"
+                            required
+                        >
+                        <span class="form-text text-danger" id="passwordError"></span>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="login-form__remember">
+                        <div class="login-form__remember-check">
+                            <input type="checkbox" id="rememberMe" class="form-check__input">
+                            <label for="rememberMe" class="form-check__label">Recuérdame</label>
+                        </div>
+                        <a href="#" class="login-form__forgot">¿Olvidó su contraseña?</a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn--primary btn--large login-form__button">
+                        <span>Iniciar Sesión</span>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="login-form__divider">¿No tiene cuenta?</div>
+
+                <!-- Footer -->
+                <div class="login-form__footer">
+                    Contacte al <a href="#">administrador del sistema</a> para solicitar acceso
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        /**
+         * Login Page Handler
+         */
+        class LoginPageHandler {
+            constructor() {
+                this.form = document.getElementById('loginForm');
+                this.emailInput = document.getElementById('email');
+                this.passwordInput = document.getElementById('password');
+                this.rememberMe = document.getElementById('rememberMe');
+                this.errorAlert = document.getElementById('loginError');
+                this.init();
+            }
+
+            init() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.loadSavedEmail();
+            }
+
+            /**
+             * Carga email guardado si existe
+             */
+            loadSavedEmail() {
+                const savedEmail = localStorage.getItem('savedEmail');
+                if (savedEmail) {
+                    this.emailInput.value = savedEmail;
+                    this.rememberMe.checked = true;
+                }
+            }
+
+            /**
+             * Valida formulario
+             */
+            validateForm() {
+                const errors = {};
+
+                if (!Validation.isEmail(this.emailInput.value)) {
+                    errors.email = 'Email inválido';
+                }
+
+                if (!this.passwordInput.value || this.passwordInput.value.length < 6) {
+                    errors.password = 'Contraseña requerida (mínimo 6 caracteres)';
+                }
+
+                return errors;
+            }
+
+            /**
+             * Muestra errores
+             */
+            showErrors(errors) {
+                document.getElementById('emailError').textContent = errors.email || '';
+                document.getElementById('passwordError').textContent = errors.password || '';
+            }
+
+            /**
+             * Maneja envío de formulario
+             */
+            async handleSubmit(e) {
+                e.preventDefault();
+
+                const errors = this.validateForm();
+                if (Object.keys(errors).length > 0) {
+                    this.showErrors(errors);
+                    return;
+                }
+
+                try {
+                    const button = this.form.querySelector('button[type="submit"]');
+                    button.disabled = true;
+
+                    // Llamar a API de login
+                    const response = await auth.login(
+                        this.emailInput.value,
+                        this.passwordInput.value
+                    );
+
+                    // Guardar email si está marcado
+                    if (this.rememberMe.checked) {
+                        localStorage.setItem('savedEmail', this.emailInput.value);
+                    } else {
+                        localStorage.removeItem('savedEmail');
+                    }
+
+                    Notify.success('Sesión iniciada exitosamente');
+                    
+                    // Redirigir a dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } catch (error) {
+                    const errorDiv = this.errorAlert;
+                    errorDiv.textContent = error.message || 'Error al iniciar sesión';
+                    errorDiv.classList.add('show');
+                    const button = this.form.querySelector('button[type="submit"]');
+                    button.disabled = false;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoginPageHandler();
+        });
+    </script>
+</body>
+</html>

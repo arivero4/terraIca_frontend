@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestión de Usuarios">
+    <title>Usuarios - Sistema de Inspecciones</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <!-- App Layout -->
+    <div class="app-layout">
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="navbar__brand">
+                <button class="navbar__toggle" id="sidebarToggle">☰</button>
+                <span>Sistema Inspecciones</span>
+            </div>
+
+            <div class="navbar__user">
+                <div class="navbar__user-menu">
+                    <button class="navbar__user-avatar" id="userMenuToggle">
+                        <span id="userInitial">U</span>
+                    </button>
+                    <div class="navbar__dropdown" id="userDropdown">
+                        <div style="padding: var(--spacing-base) var(--spacing-lg);">
+                            <div class="navbar__user-name" id="userFullName">Usuario</div>
+                        </div>
+                        <div class="navbar__dropdown-divider"></div>
+                        <button class="navbar__dropdown-item" id="logoutBtn">
+                            🚪 Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar__nav">
+                <div class="sidebar__section-title">Principal</div>
+                <li class="sidebar__item">
+                    <a href="dashboard.html" class="sidebar__link">
+                        <span>📊</span> <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <div class="sidebar__section-title">Gestión</div>
+                <li class="sidebar__item">
+                    <a href="usuarios.html" class="sidebar__link active">
+                        <span>👥</span> <span>Usuarios</span>
+                    </a>
+                </li>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-header__title">Gestión de Usuarios</h1>
+                <p class="page-header__subtitle">Administre usuarios y roles del sistema</p>
+                
+                <div class="page-header__actions">
+                    <button class="btn btn--primary" id="createUserBtn">
+                        ➕ Nuevo Usuario
+                    </button>
+                    <button class="btn btn--outline" id="exportBtn">
+                        📥 Exportar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-bar__group">
+                    <div class="form-group" style="margin: 0;">
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="searchInput" 
+                            placeholder="Buscar por nombre o email..."
+                            style="min-width: 250px;"
+                        >
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <select class="form-control" id="roleFilter" style="min-width: 150px;">
+                            <option value="">Todos los roles</option>
+                            <option value="admin">Administrador</option>
+                            <option value="inspector">Inspector</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="operario">Operario</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-bar__actions">
+                    <button class="btn btn--secondary" id="searchBtn">
+                        🔍 Buscar
+                    </button>
+                    <button class="btn btn--outline" id="clearBtn">
+                        ✕ Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="content-area">
+                <table class="table table--hoverable">
+                    <thead class="table__header">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table__body" id="usersTable">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                <div class="loader">
+                                    <div class="loader__spinner"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit User Modal -->
+    <div class="modal" id="userModal">
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 class="modal__title" id="modalTitle">Nuevo Usuario</h2>
+                <button class="modal__close" id="closeModal">&times;</button>
+            </div>
+
+            <div class="modal__body">
+                <form id="userForm" novalidate>
+                    <div class="form-group">
+                        <label class="form-label required">Nombre</label>
+                        <input type="text" class="form-control" id="nombreInput" required>
+                        <span class="form-text text-danger" id="nombreError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Apellido</label>
+                        <input type="text" class="form-control" id="apellidoInput" required>
+                        <span class="form-text text-danger" id="apellidoError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Email</label>
+                        <input type="email" class="form-control" id="emailInput" required>
+                        <span class="form-text text-danger" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group" id="passwordGroup">
+                        <label class="form-label required">Contraseña</label>
+                        <input type="password" class="form-control" id="passwordInput" required>
+                        <span class="form-text">Mínimo 8 caracteres, mayúsculas, minúsculas, números y caracteres especiales</span>
+                        <span class="form-text text-danger" id="passwordError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Rol</label>
+                        <select class="form-control" id="roleInput" required>
+                            <option value="">Seleccione un rol</option>
+                            <option value="admin">Administrador</option>
+                            <option value="inspector">Inspector</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="operario">Operario</option>
+                        </select>
+                        <span class="form-text text-danger" id="roleError"></span>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="activeInput" class="form-check__input" checked>
+                        <label class="form-check__label" for="activeInput">Usuario Activo</label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal__footer">
+                <button class="btn btn--outline" id="cancelBtn">Cancelar</button>
+                <button class="btn btn--primary" id="submitBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/usuarios.js"></script>
+    <script>
+        /**
+         * Usuarios Page Handler
+         */
+        class UsuariosPageHandler {
+            constructor() {
+                this.currentUserId = null;
+                this.usuarios = [];
+                this.init();
+            }
+
+            init() {
+                this.setupNavbar();
+                this.setupSidebar();
+                this.setupModal();
+                this.setupButtons();
+                this.loadUsuarios();
+            }
+
+            setupNavbar() {
+                const logoutBtn = document.getElementById('logoutBtn');
+                const userMenuToggle = document.getElementById('userMenuToggle');
+                const userDropdown = document.getElementById('userDropdown');
+
+                const user = auth.getCurrentUser();
+                if (user) {
+                    document.getElementById('userFullName').textContent = user.nombre + ' ' + user.apellido;
+                    document.getElementById('userInitial').textContent = user.nombre.charAt(0);
+                }
+
+                userMenuToggle.addEventListener('click', () => {
+                    userDropdown.classList.toggle('active');
+                });
+
+                logoutBtn.addEventListener('click', async () => {
+                    await auth.logout();
+                    window.location.href = '../login.html';
+                });
+            }
+
+            setupSidebar() {
+                document.getElementById('sidebarToggle').addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('collapsed');
+                });
+            }
+
+            setupModal() {
+                const modal = document.getElementById('userModal');
+                const closeBtn = document.getElementById('closeModal');
+                const cancelBtn = document.getElementById('cancelBtn');
+
+                closeBtn.addEventListener('click', () => this.closeModal());
+                cancelBtn.addEventListener('click', () => this.closeModal());
+
+                document.getElementById('userForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                });
+            }
+
+            setupButtons() {
+                document.getElementById('createUserBtn').addEventListener('click', () => {
+                    this.currentUserId = null;
+                    this.openModal();
+                });
+
+                document.getElementById('submitBtn').addEventListener('click', () => {
+                    this.saveUser();
+                });
+
+                document.getElementById('searchBtn').addEventListener('click', () => {
+                    this.filterUsuarios();
+                });
+
+                document.getElementById('clearBtn').addEventListener('click', () => {
+                    document.getElementById('searchInput').value = '';
+                    document.getElementById('roleFilter').value = '';
+                    this.loadUsuarios();
+                });
+
+                document.getElementById('exportBtn').addEventListener('click', () => {
+                    this.exportCSV();
+                });
+            }
+
+            async loadUsuarios() {
+                try {
+                    const response = await usuariosModule.getUsuarios();
+                    this.usuarios = response.data || [];
+                    this.renderTable();
+                } catch (error) {
+                    Notify.error('Error al cargar usuarios');
+                }
+            }
+
+            renderTable() {
+                const tbody = document.getElementById('usersTable');
+                
+                if (this.usuarios.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay usuarios registrados</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = this.usuarios.map(usuario => `
+                    <tr>
+                        <td>${usuario.nombre} ${usuario.apellido}</td>
+                        <td>${usuario.email}</td>
+                        <td><span class="badge badge--primary">${usuario.rol}</span></td>
+                        <td>
+                            <span class="badge ${usuario.activo ? 'badge--success' : 'badge--danger'}">
+                                ${usuario.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </td>
+                        <td>${Format.date(usuario.fechaCreacion)}</td>
+                        <td>
+                            <button class="btn btn--small btn--secondary" onclick="handler.editUsuario('${usuario.id}')">
+                                ✏️ Editar
+                            </button>
+                            <button class="btn btn--small btn--danger" onclick="handler.deleteUsuario('${usuario.id}')">
+                                🗑️ Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            openModal() {
+                const modal = document.getElementById('userModal');
+                const passwordGroup = document.getElementById('passwordGroup');
+
+                if (this.currentUserId) {
+                    document.getElementById('modalTitle').textContent = 'Editar Usuario';
+                    passwordGroup.style.display = 'none';
+                    document.getElementById('passwordInput').removeAttribute('required');
+                } else {
+                    document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
+                    passwordGroup.style.display = 'block';
+                    document.getElementById('passwordInput').setAttribute('required', 'required');
+                }
+
+                modal.classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('userModal').classList.remove('active');
+                document.getElementById('userForm').reset();
+                this.currentUserId = null;
+            }
+
+            async editUsuario(id) {
+                try {
+                    const usuario = await usuariosModule.getUsuario(id);
+                    this.currentUserId = id;
+
+                    document.getElementById('nombreInput').value = usuario.nombre;
+                    document.getElementById('apellidoInput').value = usuario.apellido;
+                    document.getElementById('emailInput').value = usuario.email;
+                    document.getElementById('roleInput').value = usuario.rol;
+                    document.getElementById('activeInput').checked = usuario.activo;
+
+                    this.openModal();
+                } catch (error) {
+                    Notify.error('Error al cargar usuario');
+                }
+            }
+
+            async deleteUsuario(id) {
+                if (confirm('¿Está seguro de eliminar este usuario?')) {
+                    try {
+                        await usuariosModule.deleteUsuario(id);
+                        this.loadUsuarios();
+                    } catch (error) {
+                        Notify.error('Error al eliminar usuario');
+                    }
+                }
+            }
+
+            async saveUser() {
+                const errors = usuariosModule.validateData({
+                    nombre: document.getElementById('nombreInput').value,
+                    apellido: document.getElementById('apellidoInput').value,
+                    email: document.getElementById('emailInput').value,
+                    roles: [document.getElementById('roleInput').value]
+                });
+
+                if (errors.length > 0) {
+                    Notify.error(errors.join(', '));
+                    return;
+                }
+
+                try {
+                    const userData = {
+                        nombre: document.getElementById('nombreInput').value,
+                        apellido: document.getElementById('apellidoInput').value,
+                        email: document.getElementById('emailInput').value,
+                        rol: document.getElementById('roleInput').value,
+                        activo: document.getElementById('activeInput').checked
+                    };
+
+                    if (!this.currentUserId) {
+                        userData.password = document.getElementById('passwordInput').value;
+                        await usuariosModule.createUsuario(userData);
+                    } else {
+                        await usuariosModule.updateUsuario(this.currentUserId, userData);
+                    }
+
+                    this.closeModal();
+                    this.loadUsuarios();
+                } catch (error) {
+                    Notify.error('Error al guardar usuario');
+                }
+            }
+
+            filterUsuarios() {
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                const role = document.getElementById('roleFilter').value;
+
+                this.usuarios = this.usuarios.filter(usuario => {
+                    const matchSearch = usuario.nombre.toLowerCase().includes(search) ||
+                                       usuario.email.toLowerCase().includes(search);
+                    const matchRole = !role || usuario.rol === role;
+                    return matchSearch && matchRole;
+                });
+
+                this.renderTable();
+            }
+
+            exportCSV() {
+                const headers = ['Nombre', 'Email', 'Rol', 'Estado', 'Fecha Creación'];
+                const rows = this.usuarios.map(u => [
+                    `${u.nombre} ${u.apellido}`,
+                    u.email,
+                    u.rol,
+                    u.activo ? 'Activo' : 'Inactivo',
+                    Format.date(u.fechaCreacion)
+                ]);
+
+                let csv = headers.join(',') + '\n';
+                rows.forEach(row => csv += row.join(',') + '\n');
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'usuarios.csv';
+                a.click();
+            }
+        }
+
+        const handler = new UsuariosPageHandler();
+    </script>
+</body>
+</html>

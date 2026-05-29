@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraIca — Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- ══════ NAVBAR ══════ -->
+    <nav class="navbar">
+        <div class="navbar__brand">
+            <button class="navbar__toggle" id="sidebarToggle" title="Menú">☰</button>
+            <span class="navbar__logo">🌿 TerraIca</span>
+        </div>
+
+        <!-- Role badge center -->
+        <div class="navbar__center">
+            <span class="role-badge" id="navRoleBadge">—</span>
+        </div>
+
+        <div class="navbar__user">
+            <div class="navbar__user-menu">
+                <button class="navbar__user-avatar" id="userMenuToggle">
+                    <span id="userInitial">U</span>
+                </button>
+                <div class="navbar__dropdown" id="userDropdown">
+                    <div class="navbar__dropdown-header">
+                        <div class="navbar__user-name" id="userFullName">Usuario</div>
+                        <small id="userEmailNav">—</small>
+                    </div>
+                    <div class="navbar__dropdown-divider"></div>
+                    <button class="navbar__dropdown-item" id="logoutBtn">🚪 Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══════ SIDEBAR ══════ -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Profile strip -->
+        <div class="sidebar__profile">
+            <div class="sidebar__profile-avatar" id="sidebarAvatar">U</div>
+            <div class="sidebar__profile-info">
+                <span class="sidebar__profile-name" id="sidebarName">Usuario</span>
+                <span class="role-badge role-badge--sm" id="sidebarRoleBadge">—</span>
+            </div>
+        </div>
+
+        <nav class="sidebar__nav">
+            <!-- PRINCIPAL -->
+            <div class="sidebar__section-title">Principal</div>
+            <ul class="sidebar__list">
+                <li class="sidebar__item">
+                    <a href="#dashboard" class="sidebar__link active" data-page="dashboard">
+                        <span class="sidebar__icon">📊</span><span>Dashboard</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- ADMIN: Gestión de usuarios -->
+            <div class="sidebar__section-title sidebar-section--admin" id="sec-usuarios-title">Administración</div>
+            <ul class="sidebar__list sidebar-section--admin" id="sec-usuarios">
+                <li class="sidebar__item">
+                    <a href="#usuarios" class="sidebar__link" data-page="usuarios">
+                        <span class="sidebar__icon">👥</span><span>Usuarios</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- TODOS: Datos territoriales -->
+            <div class="sidebar__section-title">Territorial</div>
+            <ul class="sidebar__list">
+                <!-- ADMIN -->
+                <li class="sidebar__item sidebar-section--admin">
+                    <a href="#departamentos" class="sidebar__link" data-page="departamentos">
+                        <span class="sidebar__icon">🗺️</span><span>Departamentos</span>
+                    </a>
+                </li>
+                <li class="sidebar__item sidebar-section--admin">
+                    <a href="#municipios" class="sidebar__link" data-page="municipios">
+                        <span class="sidebar__icon">🏘️</span><span>Municipios</span>
+                    </a>
+                </li>
+                <!-- PRODUCTOR + ADMIN -->
+                <li class="sidebar__item sidebar-section--productor">
+                    <a href="#lugares" class="sidebar__link" data-page="lugares">
+                        <span class="sidebar__icon">🌿</span><span>Lugares de Producción</span>
+                    </a>
+                </li>
+                <!-- PROPIETARIO + ADMIN -->
+                <li class="sidebar__item sidebar-section--propietario">
+                    <a href="#predios" class="sidebar__link" data-page="predios">
+                        <span class="sidebar__icon">🏡</span><span>Predios</span>
+                    </a>
+                </li>
+                <!-- ADMIN: catálogo de cultivos -->
+                <li class="sidebar__item sidebar-section--admin">
+                    <a href="#cultivos" class="sidebar__link" data-page="cultivos">
+                        <span class="sidebar__icon">🌾</span><span>Cultivos</span>
+                    </a>
+                </li>
+                <!-- ADMIN: catálogo de plagas -->
+                <li class="sidebar__item sidebar-section--admin">
+                    <a href="#plagas" class="sidebar__link" data-page="plagas">
+                        <span class="sidebar__icon">🐛</span><span>Catálogo de Plagas</span>
+                    </a>
+                </li>
+                <!-- PRODUCTOR + ADMIN -->
+                <li class="sidebar__item sidebar-section--productor">
+                    <a href="#lotes" class="sidebar__link" data-page="lotes">
+                        <span class="sidebar__icon">🌱</span><span>Lotes</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- ASISTENTE TÉCNICO + ADMIN: Inspecciones -->
+            <div class="sidebar__section-title sidebar-section--inspector">Fitosanidad</div>
+            <ul class="sidebar__list sidebar-section--inspector">
+                <li class="sidebar__item">
+                    <a href="#inspecciones" class="sidebar__link" data-page="inspecciones">
+                        <span class="sidebar__icon">🔬</span><span>Inspecciones</span>
+                    </a>
+                </li>
+                <li class="sidebar__item">
+                    <a href="#reportes" class="sidebar__link" data-page="reportes">
+                        <span class="sidebar__icon">📈</span><span>Reportes</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- ══════ MAIN CONTENT ══════ -->
+    <main class="main-content">
+        <!-- MODAL GLOBAL -->
+        <div class="modal-overlay" id="main-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Modal</h3>
+                    <button class="modal-close">✕</button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-cancel">Cancelar</button>
+                    <button class="btn btn-primary btn-save">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page content container -->
+        <div id="page-content"></div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/territorial.js"></script>
+<script src="js/pages.js"></script>
+
+<script>
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function getUser() {
+    try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
+}
+
+function getRole() {
+    const u = getUser();
+    // auth.js guarda { grupos: ["ADMINISTRADOR"] } — leer el primer elemento del array
+    const raw = (Array.isArray(u.grupos) ? u.grupos[0] : null)
+             || u.grupo || u.rol || u.role || '';
+    return raw.toUpperCase().replace(/ /g, '_');
+}
+
+function getRoleLabel(role) {
+    const map = {
+        ADMINISTRADOR:    '👑 Administrador',
+        PROPIETARIO:      '🏡 Propietario',
+        PRODUCTOR:        '🌱 Productor',
+        ASISTENTE_TECNICO:'🔬 Asistente Técnico',
+        CONSULTOR:        '📋 Consultor'
+    };
+    return map[role] || role || '—';
+}
+
+// ─── SIDEBAR VISIBILITY ───────────────────────────────────────────────────────
+
+function applySidebarRoles() {
+    const role = getRole();
+
+    // Hide all role-specific sections by default
+    document.querySelectorAll('.sidebar-section--admin').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.sidebar-section--propietario').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.sidebar-section--productor').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = 'none');
+
+    if (role === 'ADMINISTRADOR') {
+        document.querySelectorAll('.sidebar-section--admin').forEach(el => el.style.display = '');
+        document.querySelectorAll('.sidebar-section--propietario').forEach(el => el.style.display = '');
+        document.querySelectorAll('.sidebar-section--productor').forEach(el => el.style.display = '');
+        document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = '');
+    } else if (role === 'PROPIETARIO') {
+        document.querySelectorAll('.sidebar-section--propietario').forEach(el => el.style.display = '');
+        document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = '');
+    } else if (role === 'PRODUCTOR') {
+        document.querySelectorAll('.sidebar-section--productor').forEach(el => el.style.display = '');
+        document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = '');
+    } else if (role === 'ASISTENTE_TECNICO') {
+        document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = '');
+    } else {
+        // Default: show inspections
+        document.querySelectorAll('.sidebar-section--inspector').forEach(el => el.style.display = '');
+    }
+}
+
+// ─── PAGE ROUTING ─────────────────────────────────────────────────────────────
+
+const pageMap = {
+    dashboard:      null, // handled separately
+    usuarios:       (c) => usuariosPage.render(c),
+    departamentos:  (c) => departamentosPage.render(c),
+    municipios:     (c) => municipiosPage.render(c),
+    lugares:        (c) => lugaresPage.render(c),
+    predios:        (c) => prediosPage.render(c),
+    cultivos:       (c) => cultivosPage.render(c),
+    lotes:          (c) => lotesPage.render(c),
+    plagas:         (c) => plagasPage.render(c),
+    inspecciones:   (c) => inspeccionesPage.render(c),
+    reportes:       (c) => reportesPage.render(c)
+};
+
+async function loadPage(page) {
+    const container = document.getElementById('page-content');
+    if (!container) return;
+
+    // Update active link
+    document.querySelectorAll('.sidebar__link').forEach(l => {
+        l.classList.toggle('active', l.dataset.page === page);
+    });
+
+    if (page === 'dashboard') {
+        await renderDashboard(container);
+        return;
+    }
+
+    const renderer = pageMap[page];
+    if (renderer) {
+        container.innerHTML = `<div class="loading-screen"><div class="spinner"></div><p>Cargando ${page}...</p></div>`;
+        try {
+            await renderer(container);
+        } catch(err) {
+            console.error('Error cargando página', page, err);
+            container.innerHTML = `
+                <div class="error-state">
+                    <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+                    <h3>Error al cargar ${page}</h3>
+                    <p style="color:#8a94a6;margin:8px 0 20px">${err?.message || 'No se pudo conectar con el servidor'}</p>
+                    <button class="btn btn-secondary" onclick="loadPage('${page}')">🔄 Reintentar</button>
+                    <button class="btn btn-secondary" onclick="loadPage('dashboard')" style="margin-left:8px">← Inicio</button>
+                </div>`;
+        }
+    } else {
+        container.innerHTML = `<div class="error-state"><h3>Página no encontrada</h3></div>`;
+    }
+}
+window.loadPage = loadPage;
+
+// ─── DASHBOARD HOME ───────────────────────────────────────────────────────────
+
+async function renderDashboard(container) {
+    const role = getRole();
+    const user = getUser();
+    const nombre = user.nombre || user.name || 'Usuario';
+    const hora = new Date().getHours();
+    const saludo = hora < 12 ? '🌅 Buenos días' : hora < 18 ? '☀️ Buenas tardes' : '🌙 Buenas noches';
+    const roleCls = role.toLowerCase().replace(/_/g, '-');
+
+    // ── Contenido según rol ──────────────────────────────────────────────────
+    const statsHTML = _dashStatsHTML(role);
+    const quicklinksConfig = _dashQuicklinks(role);
+
+    container.innerHTML = `
+        <div class="dashboard-welcome">
+            <div class="dashboard-welcome__text">
+                <h1>${saludo}, <strong>${nombre}</strong></h1>
+                <p>Aquí tienes un resumen de tu actividad</p>
+            </div>
+            <div class="dashboard-welcome__role">
+                <span class="role-badge role-badge--lg role-badge--${roleCls}">${getRoleLabel(role)}</span>
+            </div>
+        </div>
+
+        ${statsHTML}
+
+        <div class="dashboard-quicklinks">
+            <h3 class="section-title">⚡ Acceso Rápido</h3>
+            <div class="quicklinks-grid">
+                ${quicklinksConfig.map(q => `
+                    <button class="quicklink-card" onclick="loadPage('${q.page}')">
+                        <span class="quicklink-card__icon">${q.icon}</span>
+                        <span class="quicklink-card__label">${q.label}</span>
+                    </button>`).join('')}
+            </div>
+        </div>
+
+        ${role === 'ASISTENTE_TECNICO' ? `<div id="at-destinos-section"></div>` : ''}`;
+
+    // Cargar stats async según rol
+    _loadDashStats(role);
+
+    // Panel especial para Asistente Técnico
+    if (role === 'ASISTENTE_TECNICO') {
+        await _renderAsistenteDashboard(document.getElementById('at-destinos-section'));
+    }
+}
+
+// ── Stats HTML por rol ──────────────────────────────────────────────────────
+
+function _dashStatsHTML(role) {
+    if (role === 'ADMINISTRADOR') {
+        return `<div class="stats-grid stats-grid--4">
+            <div class="stat-card stat-card--green"><div class="stat-card__icon">👥</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-usuarios">—</div><div class="stat-card__label">Usuarios</div></div></div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🏡</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-predios">—</div><div class="stat-card__label">Predios</div></div></div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🔬</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon">🐛</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-plagas">—</div><div class="stat-card__label">Plagas en Catálogo</div></div></div>
+        </div>`;
+    }
+    if (role === 'PROPIETARIO') {
+        return `<div class="stats-grid stats-grid--4">
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🏡</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-predios">—</div><div class="stat-card__label">Mis Predios</div></div></div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon">🌾</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-cultivos">—</div><div class="stat-card__label">Cultivos Registrados</div></div></div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🔬</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon">✅</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-completadas">—</div><div class="stat-card__label">Completadas</div></div></div>
+        </div>`;
+    }
+    if (role === 'PRODUCTOR') {
+        return `<div class="stats-grid stats-grid--4">
+            <div class="stat-card stat-card--green"><div class="stat-card__icon">🌿</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-lugares">—</div><div class="stat-card__label">Lugares de Producción</div></div></div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🌱</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-lotes">—</div><div class="stat-card__label">Lotes Activos</div></div></div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🌾</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-cosechados">—</div><div class="stat-card__label">Cosechados</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon">🔬</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
+        </div>`;
+    }
+    if (role === 'ASISTENTE_TECNICO') {
+        return `<div class="stats-grid stats-grid--4">
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon">⏳</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-pendientes">—</div><div class="stat-card__label">Pendientes</div></div></div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🔄</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-progreso">—</div><div class="stat-card__label">En Progreso</div></div></div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon">✅</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-completadas">—</div><div class="stat-card__label">Completadas</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon">🐛</div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-plagas-det">—</div><div class="stat-card__label">Plagas Detectadas</div></div></div>
+        </div>`;
+    }
+    return '';
+}
+
+// ── Quicklinks por rol ──────────────────────────────────────────────────────
+
+function _dashQuicklinks(role) {
+    if (role === 'ADMINISTRADOR') return [
+        { icon:'👥', label:'Gestionar Usuarios',    page:'usuarios' },
+        { icon:'🌾', label:'Registrar Cultivos',    page:'cultivos' },
+        { icon:'🐛', label:'Catálogo de Plagas',    page:'plagas' },
+        { icon:'🔬', label:'Ver Inspecciones',       page:'inspecciones' }
+    ];
+    if (role === 'PROPIETARIO') return [
+        { icon:'🏡', label:'Mis Predios',           page:'predios' },
+        { icon:'🔬', label:'Inspecciones',           page:'inspecciones' },
+        { icon:'📈', label:'Reportes',               page:'reportes' }
+    ];
+    if (role === 'PRODUCTOR') return [
+        { icon:'🌿', label:'Lugares de Producción', page:'lugares' },
+        { icon:'🌱', label:'Mis Lotes',             page:'lotes' },
+        { icon:'🔬', label:'Inspecciones',           page:'inspecciones' }
+    ];
+    if (role === 'ASISTENTE_TECNICO') return [
+        { icon:'🔬', label:'Ir a Inspecciones',     page:'inspecciones' },
+        { icon:'📈', label:'Ver Reportes',           page:'reportes' }
+    ];
+    return [];
+}
+
+// ── Carga de stats async por rol ────────────────────────────────────────────
+
+function _loadDashStats(role) {
+    const arr = v => Array.isArray(v) ? v : (v?.data ?? v?.content ?? []);
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+    if (role === 'ADMINISTRADOR') {
+        Promise.allSettled([
+            apiUsuarios.get(Endpoints.USUARIOS.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.PREDIOS.LIST),
+            apiInspecciones.get(Endpoints.INSPECCIONES.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.PLAGAS.LIST)
+        ]).then(([u,p,i,pl]) => {
+            if(u.status==='fulfilled')  set('d-usuarios',     arr(u.value).length);
+            if(p.status==='fulfilled')  set('d-predios',      arr(p.value).length);
+            if(i.status==='fulfilled')  set('d-inspecciones', arr(i.value).length);
+            if(pl.status==='fulfilled') set('d-plagas',       arr(pl.value).length);
+        }).catch(()=>{});
+    }
+    else if (role === 'PROPIETARIO') {
+        Promise.allSettled([
+            apiTerritorial.get(Endpoints.TERRITORIAL.PREDIOS.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.CULTIVOS.LIST),
+            apiInspecciones.get(Endpoints.INSPECCIONES.LIST)
+        ]).then(([p,c,i]) => {
+            if(p.status==='fulfilled') set('d-predios',    arr(p.value).length);
+            if(c.status==='fulfilled') set('d-cultivos',   arr(c.value).length);
+            if(i.status==='fulfilled') {
+                const insp = arr(i.value);
+                set('d-inspecciones', insp.length);
+                set('d-completadas',  insp.filter(x=>x.estado==='COMPLETADA').length);
+            }
+        }).catch(()=>{});
+    }
+    else if (role === 'PRODUCTOR') {
+        Promise.allSettled([
+            apiTerritorial.get(Endpoints.TERRITORIAL.LUGARES.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.LOTES.LIST),
+            apiInspecciones.get(Endpoints.INSPECCIONES.LIST)
+        ]).then(([l,lo,i]) => {
+            if(l.status==='fulfilled')  set('d-lugares',    arr(l.value).length);
+            if(lo.status==='fulfilled') {
+                const lotes = arr(lo.value);
+                set('d-lotes',      lotes.filter(x=>x.estado==='EN_PRODUCCION').length);
+                set('d-cosechados', lotes.filter(x=>x.estado==='COSECHADO').length);
+            }
+            if(i.status==='fulfilled')  set('d-inspecciones', arr(i.value).length);
+        }).catch(()=>{});
+    }
+    else if (role === 'ASISTENTE_TECNICO') {
+        apiInspecciones.get(Endpoints.INSPECCIONES.LIST).then(res => {
+            const insp = arr(res);
+            set('d-pendientes',  insp.filter(x=>x.estado==='PENDIENTE').length);
+            set('d-progreso',    insp.filter(x=>x.estado==='EN_PROGRESO').length);
+            set('d-completadas', insp.filter(x=>x.estado==='COMPLETADA').length);
+            // contar plagas detectadas en detalles
+            const totalPlagas = insp.reduce((s,i)=>s+(i.detalles?.reduce((a,d)=>a+(d.plagas?.length||0),0)||0),0);
+            set('d-plagas-det', totalPlagas || '—');
+        }).catch(()=>{});
+    }
+}
+
+// ── Panel de destinos para ASISTENTE TÉCNICO ────────────────────────────────
+
+async function _renderAsistenteDashboard(container) {
+    if (!container) return;
+    container.innerHTML = `
+        <div class="at-section-header">
+            <h3 class="section-title">📍 Mis Destinos de Inspección</h3>
+            <p class="section-subtitle">Inspecciones pendientes y en progreso con información de localización</p>
+        </div>
+        <div id="at-destinos-grid" class="at-destinos-grid">
+            ${[1,2,3].map(()=>`<div class="at-destino-card at-destino-card--skeleton">
+                <div class="skeleton" style="height:18px;width:60%;margin-bottom:10px"></div>
+                <div class="skeleton" style="height:13px;width:90%;margin-bottom:6px"></div>
+                <div class="skeleton" style="height:13px;width:75%;margin-bottom:6px"></div>
+                <div class="skeleton" style="height:13px;width:80%"></div>
+            </div>`).join('')}
+        </div>`;
+
+    try {
+        // Traer inspecciones pendientes y en progreso
+        const [inspRes, lotesRes] = await Promise.allSettled([
+            apiInspecciones.get(Endpoints.INSPECCIONES.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.LOTES.LIST)
+        ]);
+
+        const arr = v => Array.isArray(v) ? v : (v?.data ?? v?.content ?? []);
+        const inspecciones = arr(inspRes.value).filter(i =>
+            i.estado === 'PROGRAMADA' || i.estado === 'EN_PROCESO' ||
+            i.estado === 'PENDIENTE'  || i.estado === 'EN_PROGRESO'
+        );
+        const lotes = arr(lotesRes.value);
+
+        // Para cada inspección, construir info de localización completa
+        const grid = document.getElementById('at-destinos-grid');
+        if (!grid) return;
+
+        if (!inspecciones.length) {
+            grid.innerHTML = `
+                <div class="at-no-destinos">
+                    <span style="font-size:3rem">🎉</span>
+                    <h4>Sin inspecciones pendientes</h4>
+                    <p>No tienes destinos programados por el momento</p>
+                    <button class="btn btn-primary" onclick="loadPage('inspecciones')">Ver todas las inspecciones</button>
+                </div>`;
+            return;
+        }
+
+        // Enriquecer con datos de lote → cultivo → predio → lugar → municipio → departamento
+        const detallesPromises = inspecciones.slice(0, 8).map(async insp => {
+            try {
+                // Buscar lote en la lista cargada o hacer get individual
+                const loteId = insp.idLote || insp.loteId || insp.lote?.id;
+                let lote = lotes.find(l => l.id === loteId);
+                if (!lote && loteId) {
+                    lote = await apiTerritorial.get(
+                        Endpoints.TERRITORIAL.LOTES.GET(loteId)
+                    ).catch(() => null);
+                }
+
+                // Subir la cadena: lote → cultivo → predio → lugar → municipio → dep
+                let cultivoNombre = lote?.cultivoNombre || lote?.cultivo?.nombreComun || lote?.cultivo?.especie || '—';
+                let plagas = [];
+                let predioNombre  = '—', predioNum = '—';
+                let lugarNombre   = '—', vereda = '—';
+                let municipioNombre = '—', depNombre = '—';
+
+                // Fetch cultivo to get predioId and plagas
+                const cultivoId = lote?.cultivoId || lote?.cultivo?.id;
+                let predioId = lote?.cultivo?.predioId || lote?.cultivo?.predio?.id;
+                if (cultivoId && !predioId) {
+                    const cultivo = await apiTerritorial.get(
+                        Endpoints.TERRITORIAL.CULTIVOS.GET(cultivoId)
+                    ).catch(() => null);
+                    if (cultivo) {
+                        cultivoNombre = cultivo.nombreComun || cultivo.nombreVariedad || cultivoNombre;
+                        predioId = cultivo.predioId;
+                        plagas = cultivo.plagas || [];
+                    }
+                }
+                if (predioId) {
+                    const predio = await apiTerritorial.get(
+                        Endpoints.TERRITORIAL.PREDIOS.GET(predioId)
+                    ).catch(() => null);
+                    if (predio) {
+                        predioNombre = predio.nombre || predio.nombrePredio || '—';
+                        predioNum    = predio.numeroPredial || '—';
+                        const lugarId = predio.lugarProduccionId || predio.lugarProduccion?.id;
+                        if (lugarId) {
+                            const lugar = await apiTerritorial.get(
+                                Endpoints.TERRITORIAL.LUGARES.GET(lugarId)
+                            ).catch(() => null);
+                            if (lugar) {
+                                lugarNombre = lugar.nombre || '—';
+                                vereda = lugar.vereda || lugar.sector || '—';
+                                const munId = lugar.municipioId || lugar.municipio?.id;
+                                if (munId) {
+                                    const mun = await apiTerritorial.get(
+                                        Endpoints.TERRITORIAL.MUNICIPIOS.GET(munId)
+                                    ).catch(() => null);
+                                    if (mun) {
+                                        municipioNombre = mun.nombre || '—';
+                                        const depId = mun.departamentoId || mun.departamento?.id;
+                                        if (depId) {
+                                            const dep = await apiTerritorial.get(
+                                                Endpoints.TERRITORIAL.DEPARTAMENTOS.GET(depId)
+                                            ).catch(() => null);
+                                            depNombre = dep?.nombre || '—';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return { insp, lote, cultivoNombre, plagas, predioNombre, predioNum, lugarNombre, vereda, municipioNombre, depNombre };
+            } catch {
+                return { insp, lote: null, cultivoNombre:'—', predioNombre:'—', predioNum:'—', lugarNombre:'—', vereda:'—', municipioNombre:'—', depNombre:'—' };
+            }
+        });
+
+        const destinos = await Promise.all(detallesPromises);
+        const fecha = d => d.insp.fechaInspeccion
+            ? new Date(d.insp.fechaInspeccion).toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'})
+            : '—';
+        const estadoColor = e => (e === 'EN_PROCESO' || e === 'EN_PROGRESO') ? 'at-destino-card--progreso' : 'at-destino-card--pendiente';
+        const estadoLabel = e => (e === 'EN_PROCESO' || e === 'EN_PROGRESO')
+            ? `<span class="badge badge--info">🔄 En Proceso</span>`
+            : `<span class="badge badge--warning">⏳ Programada</span>`;
+
+        grid.innerHTML = destinos.map(d => `
+            <div class="at-destino-card ${estadoColor(d.insp.estado)}"
+                 onclick="loadPage('inspecciones')" title="Ver inspección">
+                <div class="at-destino-card__top">
+                    <div class="at-destino-card__estado">${estadoLabel(d.insp.estado)}</div>
+                    <div class="at-destino-card__fecha">📅 ${fecha(d)}</div>
+                </div>
+
+                <div class="at-destino-card__cultivo">
+                    <span class="crop-dot"></span>
+                    <strong>🌾 ${d.cultivoNombre}</strong>
+                    <span class="text-muted" style="font-size:0.78rem">
+                        · Lote: ${d.lote?.numero || d.lote?.nombre || d.insp.idLote || '—'}
+                    </span>
+                </div>
+
+                <div class="at-destino-card__localizacion">
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">🏛️</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Departamento</span>
+                            <span class="at-loc-value">${d.depNombre}</span>
+                        </div>
+                    </div>
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">🏘️</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Municipio</span>
+                            <span class="at-loc-value">${d.municipioNombre}</span>
+                        </div>
+                    </div>
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">🌿</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Lugar de Producción · Vereda</span>
+                            <span class="at-loc-value">${d.lugarNombre} ${d.vereda !== '—' ? '· <em>'+d.vereda+'</em>' : ''}</span>
+                        </div>
+                    </div>
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">🏡</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Predio · N° Predial</span>
+                            <span class="at-loc-value">${d.predioNombre} ${d.predioNum !== '—' ? '· <code>'+d.predioNum+'</code>' : ''}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${d.plagas && d.plagas.length ? `
+                <div class="at-destino-card__plagas">
+                    <span class="at-plagas-label">🦠 Plagas detectadas:</span>
+                    <div class="at-plagas-list">
+                        ${d.plagas.map(p => `<span class="at-plaga-tag at-plaga-tag--${(p.nivelRiesgo||'').toLowerCase()}" title="${p.nombreCientifico||''}">${p.nombreComun||p.nombre||'Plaga'}</span>`).join('')}
+                    </div>
+                </div>` : ''}
+
+                <div class="at-destino-card__footer">
+                    <button class="btn btn-primary btn-sm"
+                        onclick="event.stopPropagation(); loadPage('inspecciones')">
+                        🔬 Ver Inspección
+                    </button>
+                </div>
+            </div>`).join('');
+
+    } catch(e) {
+        if (container) container.innerHTML = `<div class="error-state"><p>No se pudieron cargar los destinos</p></div>`;
+    }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Auth check
+    const token = localStorage.getItem('authToken');
+    if (!token) { window.location.href = 'login.html'; return; }
+
+    const user = getUser();
+    const role = getRole();
+
+    // Populate navbar & sidebar
+    const nombre = user.nombre || user.name || 'Usuario';
+    const initial = nombre.charAt(0).toUpperCase();
+    const roleLabel = getRoleLabel(role);
+    const roleCls = 'role-badge--' + role.toLowerCase().replace(/_/g, '-');
+
+    document.getElementById('userInitial').textContent = initial;
+    document.getElementById('userFullName').textContent = nombre;
+    document.getElementById('userEmailNav').textContent = user.correo || user.email || '';
+    document.getElementById('sidebarAvatar').textContent = initial;
+    document.getElementById('sidebarName').textContent = nombre;
+
+    ['navRoleBadge', 'sidebarRoleBadge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = roleLabel; el.className = `role-badge ${roleCls}`; }
+    });
+
+    // Apply role-based sidebar
+    applySidebarRoles();
+
+    // Sidebar toggle
+    document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+        document.getElementById('sidebar')?.classList.toggle('collapsed');
+    });
+
+    // User dropdown
+    document.getElementById('userMenuToggle')?.addEventListener('click', () => {
+        document.getElementById('userDropdown')?.classList.toggle('active');
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.navbar__user-menu')) {
+            document.getElementById('userDropdown')?.classList.remove('active');
+        }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    });
+
+    // Sidebar navigation
+    document.querySelectorAll('.sidebar__link').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const page = link.dataset.page;
+            window.location.hash = page;
+            loadPage(page);
+        });
+    });
+
+    // Hash routing
+    window.addEventListener('hashchange', () => {
+        const page = window.location.hash.slice(1) || 'dashboard';
+        loadPage(page);
+    });
+
+    // Initial load
+    const initPage = window.location.hash.slice(1) || 'dashboard';
+    loadPage(initPage);
+});
+</script>
+</body>
+</html>

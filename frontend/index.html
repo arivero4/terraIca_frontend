@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Gestión de Inspecciones Fitosanitarias">
+    <title>Sistema de Inspecciones Fitosanitarias</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .landing-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: var(--spacing-2xl);
+        }
+
+        .landing-header {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .landing-header h1 {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-base);
+        }
+
+        .landing-header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .landing-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .landing-buttons .btn {
+            min-width: 200px;
+        }
+
+        .landing-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            max-width: 1000px;
+            margin-top: var(--spacing-2xl);
+        }
+
+        .feature-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-box h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-header">
+            <h1>🌾 Sistema de Inspecciones Fitosanitarias</h1>
+            <p>Gestión integral de inspecciones territoriales de salud vegetal</p>
+        </div>
+
+        <div class="landing-buttons">
+            <button class="btn btn--white" style="background: white; color: var(--color-primary);" onclick="window.location.href='login.html'">
+                Iniciar Sesión
+            </button>
+            <button class="btn btn--outline" style="border-color: white; color: white;" onclick="alert('Contacte al administrador')">
+                Solicitar Acceso
+            </button>
+        </div>
+
+        <div class="landing-features">
+            <div class="feature-box">
+                <h3>👥 Gestión de Usuarios</h3>
+                <p>Control completo de roles y permisos</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>🗺️ Territorial</h3>
+                <p>Administración de zonas geográficas</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>🔍 Inspecciones</h3>
+                <p>Registro y seguimiento fitosanitario</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>📊 Reportes</h3>
+                <p>Análisis y estadísticas avanzadas</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Si ya está autenticado, redirigir a dashboard
+        if (auth.isAuthenticated()) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>
