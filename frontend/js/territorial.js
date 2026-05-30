@@ -58,11 +58,12 @@ class TerritorialModule {
 
     async getMunicipios(departamentoId = null) {
         try {
-            const ep = departamentoId
-                ? `${Endpoints.TERRITORIAL.MUNICIPIOS.LIST}?departamento=${departamentoId}`
-                : Endpoints.TERRITORIAL.MUNICIPIOS.LIST;
-            const res = await apiTerritorial.get(ep);
-            this.municipios = this._arr(res);
+            const res = await apiTerritorial.get(Endpoints.TERRITORIAL.MUNICIPIOS.LIST);
+            const todos = this._arr(res);
+            // El backend no soporta filtro por query param — filtramos en cliente
+            this.municipios = departamentoId
+                ? todos.filter(m => m.departamentoId === parseInt(departamentoId))
+                : todos;
             return this.municipios;
         } catch (e) { Notify.error('Error al obtener municipios'); throw e; }
     }

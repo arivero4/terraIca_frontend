@@ -121,6 +121,21 @@ class BasePage {
         return Array(rows).fill(`<tr>${cells}</tr>`).join('');
     }
 
+    // ── Helper de error: muestra toast + error en modal si está abierto ──
+    _err(e, fallback = 'Error inesperado') {
+        const msg = e?.message || e?.data?.message || e?.data?.mensaje || fallback;
+        Notify.error(msg);
+        console.error('[' + this.section + ']', fallback, e);
+        return msg;
+    }
+
+    errorRow(cols, msg) {
+        return `<tr><td colspan="${cols}" class="empty-state">
+            <div class="empty-state__icon">⚠️</div>
+            <p style="color:#e53935;font-weight:600">${msg}</p>
+        </td></tr>`;
+    }
+
     bindSearch(dataFn, renderFn) {
         const input = document.getElementById('search-input');
         if (!input) return;
@@ -228,7 +243,11 @@ class UsuariosPage extends BasePage {
         const grupoOpts = this._grupos.map(g => `<option value="${g.id}">${g.nombre}</option>`).join('');
         let vals = { nombre:'', correo:'', contrasena:'', grupoId:'' };
         if (id) {
-            try { const u = await apiUsuarios.get(Endpoints.USUARIOS.GET(id)); vals = { nombre: u.nombre||u.name||'', correo: u.correo||u.email||'', grupoId: u.grupo?.id||u.grupoId||'' }; } catch {}
+            try {
+                const u = await apiUsuarios.get(Endpoints.USUARIOS.GET(id));
+                vals = { nombre: u.nombre||u.name||'', correo: u.correo||u.email||'',
+                         grupoId: u.grupos?.[0]?.id || u.grupo?.id || u.grupoId || '' };
+            } catch(e) { this._err(e, 'Error al cargar usuario'); }
         }
         const body = `
             ${!id ? `<div class="form-group"><label>N° Identificación</label><input class="form-control" id="f-cedula" placeholder="Cédula o NIT"></div>` : ''}
@@ -301,7 +320,10 @@ class DepartamentosPage extends BasePage {
         try {
             this._data = await territorialModule.getDepartamentos();
             this._render(this._data);
-        } catch { if(tbody) tbody.innerHTML = this.emptyRow(4); }
+        } catch(e) {
+            if(tbody) tbody.innerHTML = this.errorRow(4, 'Error al cargar departamentos');
+            this._err(e, 'Error cargando departamentos');
+        }
     }
 
     _render(data) {
@@ -312,9 +334,9 @@ class DepartamentosPage extends BasePage {
         tbody.innerHTML = data.map((d,i) => `
             <tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td><code>${d.codigo || d.codigoDepartamento || '—'}</code></td>
+                <td><code>${d.codigoDane || d.codigo || d.codigoDepartamento || '—'}</code></td>
                 <td><strong>${d.nombre}</strong></td>
-                <td>${this.badgeEstado(d.estado || 'ACTIVO')}</td>
+                <td>${this.badgeEstado(d.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
                 ${canW ? `<td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" onclick="departamentosPage._openForm(${d.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="departamentosPage._delete(${d.id})">🗑️</button>
@@ -323,13 +345,13 @@ class DepartamentosPage extends BasePage {
     }
 
     async _openForm(id = null) {
-        let v = { nombre:'', codigo:'' };
-        if (id) { try { const r = await territorialModule.getDepartamento(id); v = r; } catch {} }
+        let v = { nombre:'', codigoDane:'' };
+        if (id) { try { const r = await territorialModule.getDepartamento(id); v = r; } catch(e) { this._err(e,'Error al cargar departamento'); } }
         const body = `
-            <div class="form-group"><label>Código</label><input class="form-control" id="f-cod" value="${v.codigo||v.codigoDepartamento||''}" placeholder="Ej: 25"></div>
+            <div class="form-group"><label>Código DANE</label><input class="form-control" id="f-cod" value="${v.codigoDane||v.codigo||''}" placeholder="Ej: 05, 25, 76..."></div>
             <div class="form-group"><label>Nombre</label><input class="form-control" id="f-nom" value="${v.nombre||''}" placeholder="Nombre del departamento"></div>`;
         this.modal.open(id ? 'Editar Departamento' : 'Nuevo Departamento', body, async () => {
-            const data = { nombre: document.getElementById('f-nom')?.value?.trim(), codigo: document.getElementById('f-cod')?.value?.trim() };
+            const data = { nombre: document.getElementById('f-nom')?.value?.trim(), codigoDane: document.getElementById('f-cod')?.value?.trim() };
             if (!data.nombre) { this.modal.setError('El nombre es obligatorio'); return; }
             try {
                 if (id) await territorialModule.updateDepartamento(id, data);
@@ -341,7 +363,8 @@ class DepartamentosPage extends BasePage {
 
     async _delete(id) {
         if (!confirm('¿Eliminar este departamento?')) return;
-        try { await territorialModule.deleteDepartamento(id); await this._load(); } catch {}
+        try { await territorialModule.deleteDepartamento(id); Notify.success('Departamento eliminado'); await this._load(); }
+        catch(e) { this._err(e,'No se pudo eliminar el departamento'); }
     }
 }
 
@@ -379,7 +402,7 @@ class MunicipiosPage extends BasePage {
         const tbody = document.getElementById('mun-tbody');
         if (tbody) tbody.innerHTML = this.skeletonRows(6);
         try { this._data = await territorialModule.getMunicipios(depId); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(6); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(6, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
@@ -390,10 +413,10 @@ class MunicipiosPage extends BasePage {
         tbody.innerHTML = data.map((m,i) => `
             <tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td><code>${m.codigo||m.codigoMunicipio||'—'}</code></td>
+                <td><code>${m.codigoDane||m.codigo||m.codigoMunicipio||'—'}</code></td>
                 <td><strong>${m.nombre}</strong></td>
-                <td>${m.departamento?.nombre||m.departamentoNombre||'—'}</td>
-                <td>${this.badgeEstado(m.estado||'ACTIVO')}</td>
+                <td>${m.departamentoNombre||m.departamento?.nombre||'—'}</td>
+                <td>${this.badgeEstado(m.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
                 ${canW ? `<td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" onclick="municipiosPage._openForm(${m.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="municipiosPage._delete(${m.id})">🗑️</button>
@@ -403,14 +426,14 @@ class MunicipiosPage extends BasePage {
 
     async _openForm(id = null) {
         const depOpts = this._deps.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
-        let v = { nombre:'', codigo:'', departamentoId:'' };
-        if (id) { try { v = await territorialModule.getMunicipio(id); } catch {} }
+        let v = { nombre:'', codigoDane:'', departamentoId:'' };
+        if (id) { try { v = await territorialModule.getMunicipio(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const body = `
-            <div class="form-group"><label>Código</label><input class="form-control" id="f-cod" value="${v.codigo||''}" placeholder="Código DANE"></div>
+            <div class="form-group"><label>Código DANE</label><input class="form-control" id="f-cod" value="${v.codigoDane||v.codigo||''}" placeholder="Ej: 05001, 76001..."></div>
             <div class="form-group"><label>Nombre</label><input class="form-control" id="f-nom" value="${v.nombre||''}" placeholder="Nombre del municipio"></div>
             <div class="form-group"><label>Departamento</label><select class="form-control" id="f-dep"><option value="">Seleccione...</option>${depOpts}</select></div>`;
         this.modal.open(id ? 'Editar Municipio' : 'Nuevo Municipio', body, async () => {
-            const data = { nombre: document.getElementById('f-nom')?.value?.trim(), codigo: document.getElementById('f-cod')?.value?.trim(), departamentoId: parseInt(document.getElementById('f-dep')?.value) };
+            const data = { nombre: document.getElementById('f-nom')?.value?.trim(), codigoDane: document.getElementById('f-cod')?.value?.trim(), departamentoId: parseInt(document.getElementById('f-dep')?.value) };
             if (!data.nombre || !data.departamentoId) { this.modal.setError('Nombre y departamento son obligatorios'); return; }
             try {
                 if (id) await territorialModule.updateMunicipio(id, data);
@@ -423,7 +446,7 @@ class MunicipiosPage extends BasePage {
 
     async _delete(id) {
         if (!confirm('¿Eliminar este municipio?')) return;
-        try { await territorialModule.deleteMunicipio(id); await this._load(); } catch {}
+        try { await territorialModule.deleteMunicipio(id); Notify.success('Municipio eliminado'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar el municipio'); }
     }
 }
 
@@ -438,42 +461,42 @@ class LugaresPage extends BasePage {
             ${this.pageShell('Lugares de Producción','🌿','Gestiona los lugares de producción agrícola',
                 canW ? `<button class="btn btn-primary" id="btn-new-lugar">➕ Nuevo Lugar</button>` : '')}
             <div class="filter-row">
-                <select class="form-control form-control--sm" id="filter-mun"><option value="">Todos los municipios</option></select>
+                <select class="form-control form-control--sm" id="filter-estado-lugar">
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO">✅ Activo</option>
+                    <option value="INACTIVO">❌ Inactivo</option>
+                </select>
                 ${this.searchBarHTML('Buscar lugar...')}
             </div>
-            ${this.tableWrap(['#','Nombre','Vereda/Sector','Municipio','Estado', canW ? 'Acciones' : ''], 'lugar-tbody')}`;
+            ${this.tableWrap(['#','Nombre','Área (ha)','Estado', canW ? 'Acciones' : ''], 'lugar-tbody')}`;
         if (canW) document.getElementById('btn-new-lugar')?.addEventListener('click', () => this._openForm());
-        await this._loadMunicipios();
         await this._load();
-        document.getElementById('filter-mun')?.addEventListener('change', e => this._load(e.target.value || null));
+        document.getElementById('filter-estado-lugar')?.addEventListener('change', () => {
+            const est = document.getElementById('filter-estado-lugar')?.value;
+            const filtered = est ? this._data.filter(l => (l.activo !== false ? 'ACTIVO' : 'INACTIVO') === est) : this._data;
+            this._render(filtered);
+        });
         this.bindSearch(() => this._data, d => this._render(d));
     }
 
-    async _loadMunicipios() {
-        this._municipios = await territorialModule.getMunicipios().catch(() => []);
-        const sel = document.getElementById('filter-mun');
-        if (sel) this._municipios.forEach(m => sel.insertAdjacentHTML('beforeend', `<option value="${m.id}">${m.nombre}</option>`));
-    }
-
-    async _load(munId = null) {
+    async _load() {
         const tbody = document.getElementById('lugar-tbody');
-        if (tbody) tbody.innerHTML = this.skeletonRows(6);
-        try { this._data = await territorialModule.getLugares(munId); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(6); }
+        if (tbody) tbody.innerHTML = this.skeletonRows(4);
+        try { this._data = await territorialModule.getLugares(); this._render(this._data); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(4, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
         const tbody = document.getElementById('lugar-tbody');
         if (!tbody) return;
-        if (!data.length) { tbody.innerHTML = this.emptyRow(6, 'No hay lugares de producción registrados'); return; }
+        if (!data.length) { tbody.innerHTML = this.emptyRow(4, 'No hay lugares de producción registrados'); return; }
         const canW = R.canWrite('lugares');
         tbody.innerHTML = data.map((l,i) => `
             <tr>
                 <td><span class="row-num">${i+1}</span></td>
                 <td><strong>${l.nombre}</strong></td>
-                <td class="text-muted">${l.vereda||l.sector||'—'}</td>
-                <td>${l.municipio?.nombre||l.municipioNombre||'—'}</td>
-                <td>${this.badgeEstado(l.estado||'ACTIVO')}</td>
+                <td>${l.area || '—'} ha</td>
+                <td>${this.badgeEstado(l.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
                 ${canW ? `<td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" onclick="lugaresPage._openForm(${l.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="lugaresPage._delete(${l.id})">🗑️</button>
@@ -482,42 +505,45 @@ class LugaresPage extends BasePage {
     }
 
     async _openForm(id = null) {
-        const munOpts = this._municipios.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
-        let v = { nombre:'', vereda:'', municipioId:'' };
-        if (id) { try { v = await territorialModule.getLugar(id); } catch {} }
+        let v = { nombre:'', area:'', estado:'ACTIVO' };
+        if (id) { try { v = await territorialModule.getLugar(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const body = `
-            <div class="form-group"><label>Nombre del Lugar</label><input class="form-control" id="f-nom" value="${v.nombre||''}" placeholder="Nombre descriptivo del lugar"></div>
-            <div class="form-group"><label>Vereda / Sector</label><input class="form-control" id="f-vereda" value="${v.vereda||v.sector||''}" placeholder="Ej: Vereda El Paraíso"></div>
-            <div class="form-group"><label>Municipio</label><select class="form-control" id="f-mun"><option value="">Seleccione...</option>${munOpts}</select></div>
-            <div class="form-group"><label>Descripción</label><textarea class="form-control" id="f-desc" rows="3" placeholder="Información adicional...">${v.descripcion||''}</textarea></div>`;
+            <div class="form-group"><label>Nombre del Lugar</label><input class="form-control" id="f-nom" value="${v.nombre||''}" placeholder="Nombre descriptivo del lugar de producción"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Área (hectáreas)</label><input class="form-control" id="f-area" type="number" step="0.01" min="0" value="${v.area||''}" placeholder="0.00"></div>
+                <div class="form-group"><label>Estado</label>
+                    <select class="form-control" id="f-estado">
+                        <option value="ACTIVO" ${(v.activo !== false)?'selected':''}>✅ Activo</option>
+                        <option value="INACTIVO" ${(v.activo === false)?'selected':''}>❌ Inactivo</option>
+                    </select>
+                </div>
+            </div>`;
         this.modal.open(id ? 'Editar Lugar de Producción' : 'Nuevo Lugar de Producción', body, async () => {
             const data = {
                 nombre: document.getElementById('f-nom')?.value?.trim(),
-                vereda: document.getElementById('f-vereda')?.value?.trim(),
-                descripcion: document.getElementById('f-desc')?.value?.trim(),
-                municipioId: parseInt(document.getElementById('f-mun')?.value)
+                area: parseFloat(document.getElementById('f-area')?.value) || 0,
+                estado: document.getElementById('f-estado')?.value || 'ACTIVO'
             };
-            if (!data.nombre || !data.municipioId) { this.modal.setError('Nombre y municipio son obligatorios'); return; }
+            if (!data.nombre) { this.modal.setError('El nombre es obligatorio'); return; }
+            if (!data.area || data.area <= 0) { this.modal.setError('El área debe ser mayor a 0'); return; }
             try {
                 if (id) await territorialModule.updateLugar(id, data);
                 else await territorialModule.createLugar(data);
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
-        const munId = v.municipio?.id || v.municipioId;
-        if (munId) setTimeout(() => { const s = document.getElementById('f-mun'); if(s) s.value = munId; }, 50);
     }
 
     async _delete(id) {
         if (!confirm('¿Eliminar este lugar de producción?')) return;
-        try { await territorialModule.deleteLugar(id); await this._load(); } catch {}
+        try { await territorialModule.deleteLugar(id); Notify.success('Lugar eliminado'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar el lugar'); }
     }
 }
 
 // ─── PREDIOS PAGE (PROPIETARIO + ADMIN) ───────────────────────────────────────
 
 class PrediosPage extends BasePage {
-    constructor() { super('predios'); this._data = []; this._lugares = []; }
+    constructor() { super('predios'); this._data = []; this._lugares = []; this._municipios = []; }
 
     async render(container) {
         const canW = R.canWrite('predios');
@@ -530,7 +556,7 @@ class PrediosPage extends BasePage {
             </div>
             ${this.tableWrap(['#','N° Predial','Nombre','Área (ha)','Lugar','Estado', canW ? 'Acciones' : ''], 'predio-tbody')}`;
         if (canW) document.getElementById('btn-new-predio')?.addEventListener('click', () => this._openForm());
-        await this._loadLugares();
+        await Promise.all([this._loadLugares(), this._loadMunicipios()]);
         await this._load();
         document.getElementById('filter-lugar')?.addEventListener('change', e => this._load(e.target.value || null));
         this.bindSearch(() => this._data, d => this._render(d));
@@ -542,11 +568,15 @@ class PrediosPage extends BasePage {
         if (sel) this._lugares.forEach(l => sel.insertAdjacentHTML('beforeend', `<option value="${l.id}">${l.nombre}</option>`));
     }
 
+    async _loadMunicipios() {
+        this._municipios = await territorialModule.getMunicipios().catch(() => []);
+    }
+
     async _load(lugarId = null) {
         const tbody = document.getElementById('predio-tbody');
         if (tbody) tbody.innerHTML = this.skeletonRows(7);
         try { this._data = await territorialModule.getPredios(lugarId); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(7); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(7, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
@@ -560,8 +590,8 @@ class PrediosPage extends BasePage {
                 <td><code>${p.numeroPredial||'—'}</code></td>
                 <td><strong>${p.nombre||p.nombrePredio||'—'}</strong></td>
                 <td>${p.area||p.areaHectareas||'—'} ha</td>
-                <td>${p.lugarProduccion?.nombre||p.lugarNombre||'—'}</td>
-                <td>${this.badgeEstado(p.estado||'ACTIVO')}</td>
+                <td>${p.lugarProduccionNombre||p.lugarProduccion?.nombre||p.lugarNombre||'—'}</td>
+                <td>${this.badgeEstado(p.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
                 ${canW ? `<td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" onclick="prediosPage._openForm(${p.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="prediosPage._delete(${p.id})">🗑️</button>
@@ -570,37 +600,53 @@ class PrediosPage extends BasePage {
     }
 
     async _openForm(id = null) {
-        const lugOpts = this._lugares.map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
+        const lugOpts = this._lugares.map(l => `<option value="${l.id}">${l.nombre} (${l.area||0} ha)</option>`).join('');
+        const munOpts = this._municipios.map(m => `<option value="${m.id}">${m.nombre} — ${m.departamentoNombre||''}</option>`).join('');
         let v = {};
-        if (id) { try { v = await territorialModule.getPredio(id); } catch {} }
+        if (id) { try { v = await territorialModule.getPredio(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const body = `
-            <div class="form-group"><label>Número Predial</label><input class="form-control" id="f-npredial" value="${v.numeroPredial||''}" placeholder="Número catastral"></div>
-            <div class="form-group"><label>Nombre del Predio</label><input class="form-control" id="f-nom" value="${v.nombre||v.nombrePredio||''}" placeholder="Nombre descriptivo"></div>
-            <div class="form-group"><label>Área (hectáreas)</label><input class="form-control" id="f-area" type="number" step="0.01" value="${v.area||v.areaHectareas||''}" placeholder="0.00"></div>
-            <div class="form-group"><label>Lugar de Producción</label><select class="form-control" id="f-lugar"><option value="">Seleccione...</option>${lugOpts}</select></div>
-            <div class="form-group"><label>Dirección</label><input class="form-control" id="f-dir" value="${v.direccion||''}" placeholder="Dirección del predio"></div>`;
+            <div class="form-row">
+                <div class="form-group"><label>Nombre del Predio <span style="color:red">*</span></label><input class="form-control" id="f-nom" value="${v.nombre||v.nombrePredio||''}" placeholder="Nombre descriptivo"></div>
+                <div class="form-group"><label>Número Predial <span style="color:red">*</span></label><input class="form-control" id="f-npredial" value="${v.numeroPredial||''}" placeholder="Ej: 050615001"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Área (ha) <span style="color:red">*</span></label><input class="form-control" id="f-area" type="number" step="0.01" min="0.01" value="${v.area||''}" placeholder="0.00"></div>
+                <div class="form-group"><label>Vereda <span style="color:red">*</span></label><input class="form-control" id="f-vereda" value="${v.vereda||''}" placeholder="Ej: Vereda El Carmelo"></div>
+            </div>
+            <div class="form-group"><label>Municipio <span style="color:red">*</span></label>
+                <select class="form-control" id="f-municipio"><option value="">Seleccione el municipio...</option>${munOpts}</select>
+            </div>
+            <div class="form-group"><label>Lugar de Producción <span style="color:red">*</span></label>
+                <select class="form-control" id="f-lugar"><option value="">Seleccione el lugar...</option>${lugOpts}</select>
+            </div>`;
         this.modal.open(id ? 'Editar Predio' : 'Nuevo Predio', body, async () => {
             const data = {
-                numeroPredial: document.getElementById('f-npredial')?.value?.trim(),
                 nombre: document.getElementById('f-nom')?.value?.trim(),
-                area: parseFloat(document.getElementById('f-area')?.value),
-                lugarProduccionId: parseInt(document.getElementById('f-lugar')?.value),
-                direccion: document.getElementById('f-dir')?.value?.trim()
+                numeroPredial: document.getElementById('f-npredial')?.value?.trim(),
+                area: parseFloat(document.getElementById('f-area')?.value) || null,
+                vereda: document.getElementById('f-vereda')?.value?.trim(),
+                municipioId: parseInt(document.getElementById('f-municipio')?.value),
+                lugarProduccionId: parseInt(document.getElementById('f-lugar')?.value)
             };
-            if (!data.nombre || !data.lugarProduccionId) { this.modal.setError('Nombre y lugar son obligatorios'); return; }
+            if (!data.nombre || !data.numeroPredial) { this.modal.setError('Nombre y número predial son obligatorios'); return; }
+            if (!data.municipioId) { this.modal.setError('Debe seleccionar un municipio'); return; }
+            if (!data.lugarProduccionId) { this.modal.setError('Debe seleccionar un lugar de producción'); return; }
+            if (!data.vereda) { this.modal.setError('La vereda es obligatoria'); return; }
             try {
                 if (id) await territorialModule.updatePredio(id, data);
                 else await territorialModule.createPredio(data);
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
-        const lid = v.lugarProduccion?.id || v.lugarProduccionId;
+        const lid = v.lugarProduccionId || v.lugarProduccion?.id;
         if (lid) setTimeout(() => { const s = document.getElementById('f-lugar'); if(s) s.value = lid; }, 50);
+        const mid = v.municipioId || v.idMunicipio;
+        if (mid) setTimeout(() => { const s = document.getElementById('f-municipio'); if(s) s.value = mid; }, 50);
     }
 
     async _delete(id) {
         if (!confirm('¿Eliminar este predio?')) return;
-        try { await territorialModule.deletePredio(id); await this._load(); } catch {}
+        try { await territorialModule.deletePredio(id); Notify.success('Predio eliminado'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar el predio'); }
     }
 }
 
@@ -612,31 +658,22 @@ class CultivosPage extends BasePage {
     async render(container) {
         const canW = R.canWrite('cultivos');
         container.innerHTML = `
-            ${this.pageShell('Cultivos','🌾','Registro de cultivos hortifrutícolas',
+            ${this.pageShell('Cultivos','🌾','Catálogo de cultivos hortifrutícolas',
                 canW ? `<button class="btn btn-primary" id="btn-new-cultivo">➕ Nuevo Cultivo</button>` : '')}
             <div class="filter-row">
-                <select class="form-control form-control--sm" id="filter-predio"><option value="">Todos los predios</option></select>
-                ${this.searchBarHTML('Buscar cultivo...')}
+                ${this.searchBarHTML('Buscar por nombre común o científico...')}
             </div>
-            ${this.tableWrap(['#','Especie','Variedad','Área (ha)','Predio','Estado', canW ? 'Acciones' : ''], 'cultivo-tbody')}`;
+            ${this.tableWrap(['#','Nombre Común','Variedad','Nombre Científico','Descripción', canW ? 'Acciones' : ''], 'cultivo-tbody')}`;
         if (canW) document.getElementById('btn-new-cultivo')?.addEventListener('click', () => this._openForm());
-        await this._loadPredios();
         await this._load();
-        document.getElementById('filter-predio')?.addEventListener('change', e => this._load(e.target.value || null));
         this.bindSearch(() => this._data, d => this._render(d));
     }
 
-    async _loadPredios() {
-        this._predios = await territorialModule.getPredios().catch(() => []);
-        const sel = document.getElementById('filter-predio');
-        if (sel) this._predios.forEach(p => sel.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.nombre||p.numeroPredial}</option>`));
-    }
-
-    async _load(predioId = null) {
+    async _load() {
         const tbody = document.getElementById('cultivo-tbody');
-        if (tbody) tbody.innerHTML = this.skeletonRows(7);
-        try { this._data = await territorialModule.getCultivos(predioId); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(7); }
+        if (tbody) tbody.innerHTML = this.skeletonRows(5);
+        try { this._data = await territorialModule.getCultivos(); this._render(this._data); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(5, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
@@ -645,21 +682,18 @@ class CultivosPage extends BasePage {
         if (!data.length) { tbody.innerHTML = this.emptyRow(7, 'No hay cultivos registrados'); return; }
         const canW = R.canWrite('cultivos');
         tbody.innerHTML = data.map((c,i) => {
-            const nombre = c.nombreComun || c.nombreVariedad || c.especie || '—';
+            const nombre = c.nombreComun || c.nombreVariedad || '—';
+            const desc = c.descripcion ? (c.descripcion.length > 50 ? c.descripcion.substring(0,50)+'...' : c.descripcion) : '—';
             return `<tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td>
-                    <div class="cell-main"><span class="crop-dot"></span><strong>${nombre}</strong></div>
-                </td>
-                <td class="text-muted">${c.nombreVariedad || c.variedad || '—'}</td>
-                <td>${c.area || c.areaHectareas || '—'} ha</td>
-                <td>${c.predioNombre || c.predio?.nombre || '—'}</td>
-                <td>${this.badgeEstado(c.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
+                <td><div class="cell-main"><span class="crop-dot"></span><strong>${nombre}</strong></div></td>
+                <td class="text-muted">${c.nombreVariedad || '—'}</td>
+                <td><em class="text-muted">${c.nombreCientifico || '—'}</em></td>
+                <td class="text-muted">${desc}</td>
                 ${canW ? `<td class="actions-cell">
-                    <button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${nombre}')">🐛</button>
                     <button class="btn-icon btn-icon--edit" onclick="cultivosPage._openForm(${c.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="cultivosPage._delete(${c.id})">🗑️</button>
-                </td>` : `<td class="actions-cell"><button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${nombre}')">🐛</button></td>`}
+                </td>` : '<td></td>'}
             </tr>`;
         }).join('');
     }
@@ -668,9 +702,9 @@ class CultivosPage extends BasePage {
         const cultivo = await territorialModule.getCultivo(cultivoId).catch(() => null);
         const plagas = cultivo?.plagas || [];
         const canW = R.canWrite('cultivos');
-        const plagaOpts = canW ? (await territorialModule.getPlagas().catch(() => [])).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('') : '';
+        const plagaOpts = canW ? (await territorialModule.getPlagas().catch(() => [])).map(p => `<option value="${p.id}">${p.nombreComun||p.nombre} — ${p.tipo||''}</option>`).join('') : '';
         const lista = plagas.length
-            ? plagas.map(p => `<div class="plaga-item"><span class="plaga-risk-dot plaga-risk-dot--${(p.nivelRiesgo||'bajo').toLowerCase()}"></span> ${p.nombre} ${canW ? `<button class="btn-icon btn-icon--delete btn-xs" onclick="cultivosPage._desasociarPlaga(${cultivoId},${p.id})">✕</button>` : ''}</div>`).join('')
+            ? plagas.map(p => `<div class="plaga-item"><span class="plaga-risk-dot plaga-risk-dot--${(p.nivelRiesgo||'bajo').toLowerCase()}"></span> ${p.nombreComun||p.nombre||'?'} ${canW ? `<button class="btn-icon btn-icon--delete btn-xs" onclick="cultivosPage._desasociarPlaga(${cultivoId},${p.id})">✕</button>` : ''}</div>`).join('')
             : '<p class="text-muted">Sin plagas asociadas</p>';
         const body = `
             <h4 style="margin-bottom:8px">Plagas en <em>${nombre}</em></h4>
@@ -686,40 +720,36 @@ class CultivosPage extends BasePage {
         if (!sel?.value) { Notify.warning('Seleccione una plaga'); return; }
         try {
             await territorialModule.asociarPlagaCultivo(cultivoId, sel.value);
+            Notify.success('Plaga asociada al cultivo');
             this.modal.close();
-        } catch {}
+        } catch(e) { this._err(e,'No se pudo asociar la plaga'); }
     }
 
     async _desasociarPlaga(cultivoId, plagaId) {
         if (!confirm('¿Desasociar esta plaga?')) return;
-        try { await territorialModule.desasociarPlagaCultivo(cultivoId, plagaId); this.modal.close(); } catch {}
+        try { await territorialModule.desasociarPlagaCultivo(cultivoId, plagaId); this.modal.close(); } catch(e) { this._err(e,'No se pudo desasociar la plaga'); }
     }
 
     async _openForm(id = null) {
         const predioOpts = this._predios.map(p => `<option value="${p.id}">${p.nombre||p.numeroPredial}</option>`).join('');
         let v = {};
-        if (id) { try { v = await territorialModule.getCultivo(id); } catch {} }
+        if (id) { try { v = await territorialModule.getCultivo(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Nombre Común (especie)</label><input class="form-control" id="f-especie" value="${v.nombreComun||v.especie||''}" placeholder="Ej: Tomate, Mango, Aguacate"></div>
-                <div class="form-group"><label>Variedad</label><input class="form-control" id="f-variedad" value="${v.nombreVariedad||v.variedad||''}" placeholder="Ej: Cherry, Hass, Caturra"></div>
-            </div>
-            <div class="form-row">
+                <div class="form-group"><label>Nombre Común</label><input class="form-control" id="f-especie" value="${v.nombreComun||''}" placeholder="Ej: Tomate, Mango, Aguacate"></div>
                 <div class="form-group"><label>Nombre Científico</label><input class="form-control" id="f-cientifico" value="${v.nombreCientifico||''}" placeholder="Ej: Solanum lycopersicum"></div>
-                <div class="form-group"><label>Fecha de Inicio</label><input class="form-control" id="f-siembra" type="date" value="${v.fechaInicio||v.fechaSiembra||''}"></div>
             </div>
-            <div class="form-group"><label>Predio</label><select class="form-control" id="f-predio"><option value="">Seleccione...</option>${predioOpts}</select></div>
-            <div class="form-group"><label>Descripción</label><textarea class="form-control" id="f-notas" rows="2">${v.descripcion||v.notas||''}</textarea></div>`;
+            <div class="form-group"><label>Variedad</label><input class="form-control" id="f-variedad" value="${v.nombreVariedad||''}" placeholder="Ej: Cherry, Hass, Caturra"></div>
+            <div class="form-group"><label>Descripción</label><textarea class="form-control" id="f-notas" rows="3" placeholder="Características del cultivo">${v.descripcion||''}</textarea></div>`;
         this.modal.open(id ? 'Editar Cultivo' : 'Registrar Cultivo', body, async () => {
             const data = {
                 nombreComun: document.getElementById('f-especie')?.value?.trim(),
                 nombreVariedad: document.getElementById('f-variedad')?.value?.trim(),
                 nombreCientifico: document.getElementById('f-cientifico')?.value?.trim(),
-                fechaInicio: document.getElementById('f-siembra')?.value,
-                predioId: parseInt(document.getElementById('f-predio')?.value),
-                descripcion: document.getElementById('f-notas')?.value?.trim()
+                descripcion: document.getElementById('f-notas')?.value?.trim() || 'Sin descripcion'
             };
-            if (!data.nombreComun || !data.predioId) { this.modal.setError('Nombre y predio son obligatorios'); return; }
+            if (!data.nombreComun) { this.modal.setError('El nombre común es obligatorio'); return; }
+            if (!data.descripcion || data.descripcion === 'Sin descripcion') data.descripcion = 'Sin descripcion';
             try {
                 if (id) await territorialModule.updateCultivo(id, data);
                 else await territorialModule.createCultivo(data);
@@ -732,14 +762,14 @@ class CultivosPage extends BasePage {
 
     async _delete(id) {
         if (!confirm('¿Eliminar este cultivo?')) return;
-        try { await territorialModule.deleteCultivo(id); await this._load(); } catch {}
+        try { await territorialModule.deleteCultivo(id); Notify.success('Cultivo eliminado'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar el cultivo'); }
     }
 }
 
 // ─── LOTES PAGE (PRODUCTOR + ADMIN) ───────────────────────────────────────────
 
 class LotesPage extends BasePage {
-    constructor() { super('lotes'); this._data = []; this._cultivos = []; }
+    constructor() { super('lotes'); this._data = []; this._cultivos = []; this._lugares = []; }
 
     async render(container) {
         const canW = R.canWrite('lotes');
@@ -752,7 +782,7 @@ class LotesPage extends BasePage {
             </div>
             ${this.tableWrap(['#','Código','Cultivo','Área (ha)','Estado','Acciones'], 'lote-tbody')}`;
         if (canW) document.getElementById('btn-new-lote')?.addEventListener('click', () => this._openForm());
-        await this._loadCultivos();
+        await Promise.all([this._loadCultivos(), this._loadLugares()]);
         await this._load();
         document.getElementById('filter-cultivo')?.addEventListener('change', e => this._load(e.target.value || null));
         this.bindSearch(() => this._data, d => this._render(d));
@@ -761,14 +791,19 @@ class LotesPage extends BasePage {
     async _loadCultivos() {
         this._cultivos = await territorialModule.getCultivos().catch(() => []);
         const sel = document.getElementById('filter-cultivo');
-        if (sel) this._cultivos.forEach(c => sel.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||c.especie||'Cultivo'} ${c.nombreVariedad && c.nombreComun ? '- '+c.nombreVariedad : ''}</option>`));
+        if (sel) this._cultivos.forEach(c => sel.insertAdjacentHTML('beforeend',
+            `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||'Cultivo'}</option>`));
+    }
+
+    async _loadLugares() {
+        this._lugares = await territorialModule.getLugares().catch(() => []);
     }
 
     async _load(cultivoId = null) {
         const tbody = document.getElementById('lote-tbody');
         if (tbody) tbody.innerHTML = this.skeletonRows(6);
         try { this._data = await territorialModule.getLotes(cultivoId); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(6); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(6, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
@@ -796,181 +831,157 @@ class LotesPage extends BasePage {
 
     async _iniciar(id) {
         if (!confirm('¿Iniciar producción de este lote?')) return;
-        try { await territorialModule.iniciarProduccionLote(id); await this._load(); } catch {}
+        try { await territorialModule.iniciarProduccionLote(id); Notify.success('Producción iniciada'); await this._load(); } catch(e) { this._err(e,'No se pudo iniciar producción'); }
     }
 
     async _cosechar(id) {
         if (!confirm('¿Registrar cosecha de este lote?')) return;
-        try { await territorialModule.cosecharLote(id); await this._load(); } catch {}
+        try { await territorialModule.cosecharLote(id); Notify.success('Cosecha registrada'); await this._load(); } catch(e) { this._err(e,'No se pudo registrar cosecha'); }
     }
 
     async _openForm(id = null) {
         let v = {};
-        if (id) { try { v = await territorialModule.getLote(id); } catch {} }
-        const culOpts2 = this._cultivos.map(c => `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||c.especie||'Cultivo'}</option>`).join('');
+        if (id) { try { v = await territorialModule.getLote(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
+        const culOpts = this._cultivos.map(c => `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||'Cultivo'}</option>`).join('');
+        const lugOpts = this._lugares.map(l => `<option value="${l.id}">${l.nombre} (${l.area||0} ha)</option>`).join('');
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Número del Lote</label><input class="form-control" id="f-codigo" value="${v.numero||v.codigoLote||''}" placeholder="Ej: L-001"></div>
-                <div class="form-group"><label>Nombre del Lote</label><input class="form-control" id="f-nombre" value="${v.nombre||''}" placeholder="Ej: Lote Norte"></div>
+                <div class="form-group"><label>Nombre del Lote <span style="color:red">*</span></label><input class="form-control" id="f-nombre" value="${v.nombre||''}" placeholder="Ej: Lote Norte"></div>
+                <div class="form-group"><label>Área (ha) <span style="color:red">*</span></label><input class="form-control" id="f-area" type="number" step="0.01" min="0.01" value="${v.area||''}"></div>
+            </div>
+            <div class="form-group"><label>Lugar de Producción <span style="color:red">*</span></label>
+                <select class="form-control" id="f-lugar"><option value="">Seleccione el lugar...</option>${lugOpts}</select>
+            </div>
+            <div class="form-group"><label>Cultivo <span style="color:red">*</span></label>
+                <select class="form-control" id="f-cultivo"><option value="">Seleccione el cultivo...</option>${culOpts}</select>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Área (ha)</label><input class="form-control" id="f-area" type="number" step="0.01" value="${v.area||''}"></div>
                 <div class="form-group"><label>Estado</label>
                     <select class="form-control" id="f-estado">
-                        <option value="ACTIVO" ${(v.estado||'ACTIVO')==='ACTIVO'?'selected':''}>Activo</option>
-                        <option value="EN_PRODUCCION" ${v.estado==='EN_PRODUCCION'?'selected':''}>En Producción</option>
-                        <option value="COSECHADO" ${v.estado==='COSECHADO'?'selected':''}>Cosechado</option>
-                        <option value="INACTIVO" ${v.estado==='INACTIVO'?'selected':''}>Inactivo</option>
+                        <option value="ACTIVO" ${(v.estado||'ACTIVO')==='ACTIVO'?'selected':''}>🌱 Activo</option>
+                        <option value="EN_PRODUCCION" ${v.estado==='EN_PRODUCCION'?'selected':''}>🌿 En Producción</option>
+                        <option value="COSECHADO" ${v.estado==='COSECHADO'?'selected':''}>🌾 Cosechado</option>
+                        <option value="INACTIVO" ${v.estado==='INACTIVO'?'selected':''}>❌ Inactivo</option>
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>Cultivo</label><select class="form-control" id="f-cultivo"><option value="">Seleccione...</option>${culOpts2}</select></div>
             <div class="form-row">
-                <div class="form-group"><label>Fecha Siembra</label><input class="form-control" id="f-inicio" type="date" value="${v.fechaSiembra||''}"></div>
-                <div class="form-group"><label>Fecha Estimada Cosecha</label><input class="form-control" id="f-cosecha" type="date" value="${v.fechaCosechaEstimada||''}"></div>
+                <div class="form-group"><label>Fecha Siembra <span style="color:red">*</span></label><input class="form-control" id="f-inicio" type="date" value="${v.fechaSiembra||''}"></div>
+                <div class="form-group"><label>Fecha Estimada Cosecha <span style="color:red">*</span></label><input class="form-control" id="f-cosecha" type="date" value="${v.fechaCosechaEstimada||''}"></div>
             </div>`;
         this.modal.open(id ? 'Editar Lote' : 'Nuevo Lote', body, async () => {
             const data = {
-                numero: document.getElementById('f-codigo')?.value?.trim(),
                 nombre: document.getElementById('f-nombre')?.value?.trim(),
                 area: parseFloat(document.getElementById('f-area')?.value) || null,
                 estado: document.getElementById('f-estado')?.value || 'ACTIVO',
+                idLugar: parseInt(document.getElementById('f-lugar')?.value),
                 cultivoId: parseInt(document.getElementById('f-cultivo')?.value),
                 fechaSiembra: document.getElementById('f-inicio')?.value || null,
                 fechaCosechaEstimada: document.getElementById('f-cosecha')?.value || null
             };
-            if (!data.numero || !data.cultivoId) { this.modal.setError('Número de lote y cultivo son obligatorios'); return; }
+            if (!data.nombre) { this.modal.setError('El nombre del lote es obligatorio'); return; }
+            if (!data.cultivoId) { this.modal.setError('Debe seleccionar un cultivo'); return; }
+            if (!data.idLugar) { this.modal.setError('Debe seleccionar un lugar de producción'); return; }
+            if (!data.fechaSiembra) { this.modal.setError('La fecha de siembra es obligatoria'); return; }
+            if (!data.fechaCosechaEstimada) { this.modal.setError('La fecha estimada de cosecha es obligatoria'); return; }
             try {
                 if (id) await territorialModule.updateLote(id, data);
                 else await territorialModule.createLote(data);
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
-        const cid = v.cultivo?.id || v.cultivoId;
-        if (cid) setTimeout(() => { const s = document.getElementById('f-cultivo'); if(s) s.value = cid; }, 50);
+        const cid = v.cultivoId; if (cid) setTimeout(() => { const s = document.getElementById('f-cultivo'); if(s) s.value = cid; }, 50);
+        const lid = v.idLugar || v.lugarProduccion?.id; if (lid) setTimeout(() => { const s = document.getElementById('f-lugar'); if(s) s.value = lid; }, 50);
     }
 
     async _delete(id) {
         if (!confirm('¿Eliminar este lote?')) return;
-        try { await territorialModule.deleteLote(id); await this._load(); } catch {}
+        try { await territorialModule.deleteLote(id); Notify.success('Lote eliminado'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar el lote'); }
     }
 }
 
 // ─── PLAGAS PAGE (ADMIN CRUD, TODOS leen) ─────────────────────────────────────
 
 class PlagasPage extends BasePage {
-    constructor() { super('plagas'); this._data = []; }
+    constructor() { super('plagas'); this._data = []; this._cultivos = []; }
 
     async render(container) {
         const canW = R.canWrite('plagas');
         container.innerHTML = `
-            ${this.pageShell('Catálogo de Plagas','🐛','Registro de plagas y enfermedades hortifrutícolas',
+            ${this.pageShell('Catálogo de Plagas','🐛','Registro de plagas asociadas a cultivos',
                 canW ? `<button class="btn btn-primary" id="btn-new-plaga">➕ Nueva Plaga</button>` : '')}
             <div class="filter-row">
-                <select class="form-control form-control--sm" id="filter-tipo">
-                    <option value="">Todos los tipos</option>
-                    <option value="INSECTO">🐜 Insecto</option>
-                    <option value="HONGO">🍄 Hongo</option>
-                    <option value="BACTERIA">🦠 Bacteria</option>
-                    <option value="VIRUS">🔬 Virus</option>
-                    <option value="NEMATODO">🪱 Nematodo</option>
-                    <option value="ACARO">🕷️ Ácaro</option>
-                    <option value="OTRO">❓ Otro</option>
-                </select>
-                <select class="form-control form-control--sm" id="filter-riesgo">
-                    <option value="">Todos los riesgos</option>
-                    <option value="BAJO">🟢 Bajo</option>
-                    <option value="MEDIO">🟡 Medio</option>
-                    <option value="ALTO">🔴 Alto</option>
-                    <option value="CUARENTENA">⛔ Cuarentena</option>
-                </select>
                 ${this.searchBarHTML('Buscar por nombre científico o común...')}
             </div>
-            ${this.tableWrap(['#','Nombre','Nombre Científico','Tipo','Nivel de Riesgo', canW ? 'Acciones' : ''], 'plaga-tbody')}`;
+            ${this.tableWrap(['#','Nombre Común','Nombre Científico','Cultivo Asociado', canW ? 'Acciones' : ''], 'plaga-tbody')}`;
         if (canW) document.getElementById('btn-new-plaga')?.addEventListener('click', () => this._openForm());
+        this._cultivos = await territorialModule.getCultivos().catch(() => []);
         await this._load();
-        document.getElementById('filter-tipo')?.addEventListener('change', e => this._load({ tipo: e.target.value || undefined }));
-        document.getElementById('filter-riesgo')?.addEventListener('change', e => this._load({ riesgo: e.target.value || undefined }));
         this.bindSearch(() => this._data, d => this._render(d));
     }
 
-    async _load(filtros = {}) {
+    async _load() {
         const tbody = document.getElementById('plaga-tbody');
-        if (tbody) tbody.innerHTML = this.skeletonRows(6);
-        try { this._data = await territorialModule.getPlagas(filtros); this._render(this._data); }
-        catch { if(tbody) tbody.innerHTML = this.emptyRow(6); }
-    }
-
-    _riesgoBadge(r) {
-        const map = { BAJO: ['🟢','badge--success'], MEDIO: ['🟡','badge--warning'], ALTO: ['🔴','badge--danger'], CUARENTENA: ['⛔','badge--dark'] };
-        const [emoji, cls] = map[r?.toUpperCase()] || ['❓','badge--secondary'];
-        return `<span class="badge ${cls}">${emoji} ${r||'—'}</span>`;
+        if (tbody) tbody.innerHTML = this.skeletonRows(4);
+        try { this._data = await territorialModule.getPlagas({}); this._render(this._data); }
+        catch(e) { if(tbody) tbody.innerHTML = this.errorRow(4, this._err(e,'Error al cargar datos')); }
     }
 
     _render(data) {
         const tbody = document.getElementById('plaga-tbody');
         if (!tbody) return;
-        if (!data.length) { tbody.innerHTML = this.emptyRow(6, 'No hay plagas en el catálogo'); return; }
+        if (!data.length) { tbody.innerHTML = this.emptyRow(4, 'No hay plagas en el catálogo'); return; }
         const canW = R.canWrite('plagas');
-        tbody.innerHTML = data.map((p,i) => `
-            <tr>
+        tbody.innerHTML = data.map((p,i) => {
+            // Find cultivo name from loaded cultivos list
+            const cult = this._cultivos.find(c => c.id === (p.idCultivo || p.cultivo?.id));
+            const cultivoNombre = cult ? `${cult.nombreComun||cult.nombreVariedad}` : (p.idCultivo ? `Cultivo #${p.idCultivo}` : '—');
+            return `<tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td><strong>${p.nombre||p.nombreComun||'—'}</strong></td>
+                <td><strong>${p.nombreComun||p.nombre||'—'}</strong></td>
                 <td><em class="text-muted">${p.nombreCientifico||'—'}</em></td>
-                <td><span class="chip chip--tipo">${p.tipo||'—'}</span></td>
-                <td>${this._riesgoBadge(p.nivelRiesgo)}</td>
+                <td><span class="chip">${cultivoNombre}</span></td>
                 ${canW ? `<td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" onclick="plagasPage._openForm(${p.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="plagasPage._delete(${p.id})">🗑️</button>
                 </td>` : '<td></td>'}
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     async _openForm(id = null) {
         let v = {};
-        if (id) { try { v = await territorialModule.getPlaga(id); } catch {} }
+        if (id) { try { v = await territorialModule.getPlaga(id); } catch(e) { this._err(e,'Error al cargar datos'); } }
+        const culOpts = this._cultivos.map(c => `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||'Cultivo'}</option>`).join('');
+        const currentCultivo = v.idCultivo || v.cultivo?.id;
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Nombre Común</label><input class="form-control" id="f-nom" value="${v.nombre||v.nombreComun||''}" placeholder="Ej: Mosca blanca"></div>
-                <div class="form-group"><label>Nombre Científico</label><input class="form-control" id="f-cientifico" value="${v.nombreCientifico||''}" placeholder="Ej: Bemisia tabaci"></div>
+                <div class="form-group"><label>Nombre Común <span style="color:red">*</span></label><input class="form-control" id="f-nom" value="${v.nombreComun||v.nombre||''}" placeholder="Ej: Mosca blanca"></div>
+                <div class="form-group"><label>Nombre Científico <span style="color:red">*</span></label><input class="form-control" id="f-cientifico" value="${v.nombreCientifico||''}" placeholder="Ej: Bemisia tabaci"></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>Tipo</label>
-                    <select class="form-control" id="f-tipo">
-                        <option value="">Seleccione...</option>
-                        ${['INSECTO','HONGO','BACTERIA','VIRUS','NEMATODO','ACARO','OTRO'].map(t => `<option value="${t}" ${v.tipo===t?'selected':''}>${t}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group"><label>Nivel de Riesgo</label>
-                    <select class="form-control" id="f-riesgo">
-                        <option value="">Seleccione...</option>
-                        ${['BAJO','MEDIO','ALTO','CUARENTENA'].map(r => `<option value="${r}" ${v.nivelRiesgo===r?'selected':''}>${r}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-            <div class="form-group"><label>Descripción</label><textarea class="form-control" id="f-desc" rows="3" placeholder="Síntomas, impacto, ciclo de vida...">${v.descripcion||''}</textarea></div>
-            <div class="form-group"><label>Método de Control</label><textarea class="form-control" id="f-control" rows="2" placeholder="Métodos de control recomendados...">${v.metodoControl||''}</textarea></div>`;
+            <div class="form-group"><label>Cultivo Asociado <span style="color:red">*</span></label>
+                <select class="form-control" id="f-cultivo-plaga"><option value="">Seleccione el cultivo afectado...</option>${culOpts}</select>
+            </div>`;
         this.modal.open(id ? 'Editar Plaga' : 'Nueva Plaga en Catálogo', body, async () => {
             const data = {
-                nombre: document.getElementById('f-nom')?.value?.trim(),
+                nombreComun: document.getElementById('f-nom')?.value?.trim(),
                 nombreCientifico: document.getElementById('f-cientifico')?.value?.trim(),
-                tipo: document.getElementById('f-tipo')?.value,
-                nivelRiesgo: document.getElementById('f-riesgo')?.value,
-                descripcion: document.getElementById('f-desc')?.value?.trim(),
-                metodoControl: document.getElementById('f-control')?.value?.trim()
+                idCultivo: parseInt(document.getElementById('f-cultivo-plaga')?.value)
             };
-            if (!data.nombre || !data.tipo) { this.modal.setError('Nombre y tipo son obligatorios'); return; }
+            if (!data.nombreComun || !data.nombreCientifico) { this.modal.setError('Nombre común y científico son obligatorios'); return; }
+            if (!data.idCultivo) { this.modal.setError('Debe seleccionar un cultivo asociado'); return; }
             try {
                 if (id) await territorialModule.updatePlaga(id, data);
                 else await territorialModule.createPlaga(data);
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
+        if (currentCultivo) setTimeout(() => { const s = document.getElementById('f-cultivo-plaga'); if(s) s.value = currentCultivo; }, 50);
     }
 
     async _delete(id) {
         if (!confirm('¿Eliminar esta plaga del catálogo?')) return;
-        try { await territorialModule.deletePlaga(id); await this._load(); } catch {}
+        try { await territorialModule.deletePlaga(id); Notify.success('Plaga eliminada'); await this._load(); } catch(e) { this._err(e,'No se pudo eliminar la plaga'); }
     }
 }
 
@@ -1017,7 +1028,7 @@ class InspeccionesPage extends BasePage {
             this._data = Array.isArray(res) ? res : (res?.data ?? res?.content ?? []);
             this._renderStats();
             this._render(this._data);
-        } catch { if(tbody) tbody.innerHTML = this.emptyRow(6); }
+        } catch(e) { if(tbody) tbody.innerHTML = this.errorRow(6, this._err(e,'Error al cargar datos')); }
     }
 
     _renderStats() {
@@ -1058,23 +1069,23 @@ class InspeccionesPage extends BasePage {
 
     async _iniciar(id) {
         if (!confirm('¿Iniciar esta inspección?')) return;
-        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.INICIAR(id)); Notify.success('Inspección iniciada'); await this._load(); } catch {}
+        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.INICIAR(id)); Notify.success('Inspección iniciada'); await this._load(); } catch(e) { this._err(e,'No se pudo iniciar la inspección'); }
     }
 
     async _completar(id) {
         if (!confirm('¿Marcar como completada?')) return;
-        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.COMPLETAR(id)); Notify.success('Inspección completada'); await this._load(); } catch {}
+        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.COMPLETAR(id)); Notify.success('Inspección completada'); await this._load(); } catch(e) { this._err(e,'No se pudo completar la inspección'); }
     }
 
     async _cancelar(id) {
         if (!confirm('¿Cancelar esta inspección?')) return;
-        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.CANCELAR(id)); Notify.success('Inspección cancelada'); await this._load(); } catch {}
+        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.CANCELAR(id)); Notify.success('Inspección cancelada'); await this._load(); } catch(e) { this._err(e,'No se pudo cancelar la inspección'); }
     }
 
     async _openForm(id = null) {
         const loteOpts = this._lotes.map(l => `<option value="${l.id}">${l.numero||l.codigoLote||'Lote '+l.id}${l.nombre?' - '+l.nombre:''}</option>`).join('');
         let v = {};
-        if (id) { try { v = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)); } catch {} }
+        if (id) { try { v = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const body = `
             <div class="form-row">
@@ -1349,7 +1360,7 @@ class InspeccionDetallePage extends BasePage {
             await apiInspecciones.delete(Endpoints.INSPECCIONES.DETALLES.PLAGAS.DELETE(plagaDetId));
             Notify.success('Registro eliminado');
             await this.render(document.getElementById('page-content'), this._inspeccion.idInspeccion || this._inspeccion.id);
-        } catch {}
+        } catch(e) { this._err(e,'No se pudo eliminar el registro'); }
     }
 }
 

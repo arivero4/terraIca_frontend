@@ -49,14 +49,25 @@ class APIClient {
             clearTimeout(timeoutId);
 
             if (response.status === 401) {
-                this.handleUnauthorized();
-                throw new Error('Sesión expirada. Por favor inicie sesión nuevamente.');
+                // Si ya estamos en login.html, NO redirigir — solo lanzar el error
+                // para que el formulario de login lo muestre correctamente
+                const isLoginPage = window.location.pathname.includes('login.html') ||
+                                    window.location.href.includes('login.html');
+                if (!isLoginPage) {
+                    this.handleUnauthorized();
+                }
+                const errBody = await response.json().catch(() => ({}));
+                throw new APIError(
+                    errBody.message || 'Correo o contraseña incorrectos',
+                    401,
+                    errBody
+                );
             }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new APIError(
-                    errorData.message || `HTTP ${response.status}`,
+                    errorData.message || errorData.mensaje || `Error ${response.status}`,
                     response.status,
                     errorData
                 );
@@ -78,7 +89,8 @@ class APIClient {
                 throw new Error('Request timeout. Intente nuevamente.');
             }
 
-            if (attempt < this.retryAttempts) {
+            // Solo reintentar errores de red/timeout, no errores HTTP 4xx/5xx
+            if (!(error instanceof APIError) && attempt < this.retryAttempts) {
                 await new Promise(r => setTimeout(r, 500 * attempt));
                 return this.request(endpoint, options, attempt + 1);
             }
