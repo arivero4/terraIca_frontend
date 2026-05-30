@@ -238,9 +238,10 @@ const Endpoints = {
         CREATE:   '/inspecciones',
         UPDATE:   (id) => `/inspecciones/${id}`,
         DELETE:   (id) => `/inspecciones/${id}`,
-        INICIAR:  (id) => `/inspecciones/${id}/iniciar`,
-        COMPLETAR:(id) => `/inspecciones/${id}/completar`,
-        CANCELAR: (id) => `/inspecciones/${id}/cancelar`,
+        INICIAR:   (id) => `/inspecciones/${id}/iniciar`,
+        COMPLETAR: (id) => `/inspecciones/${id}/completar`,
+        CANCELAR:  (id) => `/inspecciones/${id}/cancelar`,
+        REVISION:  (id) => `/inspecciones/${id}/revision`,
         DETALLES: {
             LIST:   (inspeccionId) => `/inspecciones/${inspeccionId}/detalles`,
             GET:    (detalleId) => `/detalles/${detalleId}`,

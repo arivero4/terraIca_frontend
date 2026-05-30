@@ -344,6 +344,98 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Plagas Image Utilities
+ * Obtiene imágenes de plagas desde Wikipedia/Wikimedia Commons
+ * para que el Asistente Técnico identifique plagas en campo
+ */
+const PlagaImages = {
+    // Cache en memoria para evitar múltiples peticiones
+    _cache: {},
+
+    // Mapa de nombres científicos conocidos → imagen directa (fallback rápido)
+    _knownImages: {
+        'Bemisia tabaci':           'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Bemisia_tabaci.jpg/200px-Bemisia_tabaci.jpg',
+        'Tetranychus urticae':      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Tetranychus_urticae_with_silk_threads.jpg/200px-Tetranychus_urticae_with_silk_threads.jpg',
+        'Tetranychus cinnabarinus': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Tetranychus_urticae_with_silk_threads.jpg/200px-Tetranychus_urticae_with_silk_threads.jpg',
+        'Aphis gossypii':           'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Aphis_gossypii_Glover.jpg/200px-Aphis_gossypii_Glover.jpg',
+        'Spodoptera frugiperda':    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Spodoptera_frugiperda_adult.jpg/200px-Spodoptera_frugiperda_adult.jpg',
+        'Phytophthora infestans':   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Phytophthora_infestans_on_potato_leaf.jpg/200px-Phytophthora_infestans_on_potato_leaf.jpg',
+        'Botrytis cinerea':         'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Botrytis_cinerea_on_Vitis.jpg/200px-Botrytis_cinerea_on_Vitis.jpg',
+        'Xanthomonas campestris':   'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Bacterial_leaf_scorch.jpg/200px-Bacterial_leaf_scorch.jpg',
+        'Frankliniella occidentalis':'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Frankliniella_occidentalis.jpg/200px-Frankliniella_occidentalis.jpg',
+        'Heliothrips haemorrhoidalis':'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Frankliniella_occidentalis.jpg/200px-Frankliniella_occidentalis.jpg',
+        'Acyrthosiphon pisum':      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Acyrthosiphon_pisum_%28pea_aphid%29.jpg/200px-Acyrthosiphon_pisum_%28pea_aphid%29.jpg'
+    },
+
+    // Icono SVG fallback por tipo de organismo
+    _fallbackIcons: {
+        'INSECTO': '🦟', 'HONGO': '🍄', 'BACTERIA': '🦠',
+        'VIRUS': '🔬', 'ACARO': '🕷️', 'NEMATODO': '🪱', 'default': '🐛'
+    },
+
+    /**
+     * Obtiene la URL de imagen para una plaga.
+     * Primero busca en cache, luego en mapa conocido, luego en Wikipedia.
+     */
+    async getImageUrl(nombreCientifico) {
+        if (!nombreCientifico) return null;
+        const key = nombreCientifico.trim();
+
+        // 1. Cache
+        if (this._cache[key] !== undefined) return this._cache[key];
+
+        // 2. Mapa conocido
+        if (this._knownImages[key]) {
+            this._cache[key] = this._knownImages[key];
+            return this._knownImages[key];
+        }
+
+        // 3. Wikipedia API (genus + species)
+        try {
+            const search = key.split(' ').slice(0,2).join('_');
+            const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(search)}&prop=pageimages&format=json&pithumbsize=220&origin=*`;
+            const resp = await fetch(url, { signal: AbortSignal.timeout(3000) });
+            const data = await resp.json();
+            const pages = data.query?.pages;
+            if (pages) {
+                const page = Object.values(pages)[0];
+                const imgUrl = page?.thumbnail?.source || null;
+                this._cache[key] = imgUrl;
+                return imgUrl;
+            }
+        } catch {}
+
+        this._cache[key] = null;
+        return null;
+    },
+
+    /**
+     * Renderiza un elemento de imagen de plaga con fallback al ícono
+     */
+    async renderImg(nombreCientifico, tipo, size = 80) {
+        const url = await this.getImageUrl(nombreCientifico);
+        if (url) {
+            return `<img src="${url}" alt="${nombreCientifico||'Plaga'}"
+                        style="width:${size}px;height:${size}px;object-fit:cover;border-radius:10px;border:2px solid #e2e8f0"
+                        onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+                    <div style="display:none;width:${size}px;height:${size}px;border-radius:10px;background:#f0f4f8;align-items:center;justify-content:center;font-size:${size/2.5}rem;border:2px solid #e2e8f0">
+                        ${this._fallbackIcons[tipo?.toUpperCase()] || this._fallbackIcons.default}
+                    </div>`;
+        }
+        return `<div style="width:${size}px;height:${size}px;border-radius:10px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:${size/2.5}rem;border:2px solid #e2e8f0">
+                    ${this._fallbackIcons[tipo?.toUpperCase()] || this._fallbackIcons.default}
+                </div>`;
+    },
+
+    /**
+     * Renderiza imagen pequeña inline (para listas)
+     */
+    async renderThumb(nombreCientifico, tipo) {
+        return this.renderImg(nombreCientifico, tipo, 44);
+    }
+};
+
 // Exponer globalmente para acceso desde HTML
 window.DOM = DOM;
 window.Validation = Validation;
@@ -354,3 +446,4 @@ window.Loader = Loader;
 window.debounce = debounce;
 window.throttle = throttle;
 window.delay = delay;
+window.PlagaImages = PlagaImages;

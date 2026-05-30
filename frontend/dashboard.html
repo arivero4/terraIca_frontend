@@ -16,7 +16,7 @@
     <nav class="navbar">
         <div class="navbar__brand">
             <button class="navbar__toggle" id="sidebarToggle" title="Menú">☰</button>
-            <span class="navbar__logo">🌿 TerraIca</span>
+            <span class="navbar__logo">TerraIca</span>
         </div>
 
         <!-- Role badge center -->
@@ -35,7 +35,7 @@
                         <small id="userEmailNav">—</small>
                     </div>
                     <div class="navbar__dropdown-divider"></div>
-                    <button class="navbar__dropdown-item" id="logoutBtn">🚪 Cerrar Sesión</button>
+                    <button class="navbar__dropdown-item" id="logoutBtn">Cerrar Sesión</button>
                 </div>
             </div>
         </div>
@@ -58,78 +58,84 @@
             <ul class="sidebar__list">
                 <li class="sidebar__item">
                     <a href="#dashboard" class="sidebar__link active" data-page="dashboard">
-                        <span class="sidebar__icon">📊</span><span>Dashboard</span>
+                        <span class="sidebar__icon"></span><span>Dashboard</span>
                     </a>
                 </li>
             </ul>
 
-            <!-- ADMIN: Gestión de usuarios -->
-            <div class="sidebar__section-title sidebar-section--admin" id="sec-usuarios-title">Administración</div>
-            <ul class="sidebar__list sidebar-section--admin" id="sec-usuarios">
+            <!-- ADMIN ICA: Administración -->
+            <div class="sidebar__section-title sidebar-section--admin">Administración</div>
+            <ul class="sidebar__list sidebar-section--admin">
                 <li class="sidebar__item">
                     <a href="#usuarios" class="sidebar__link" data-page="usuarios">
-                        <span class="sidebar__icon">👥</span><span>Usuarios</span>
+                        <span class="sidebar__icon"></span><span>Usuarios</span>
                     </a>
                 </li>
             </ul>
 
-            <!-- TODOS: Datos territoriales -->
-            <div class="sidebar__section-title">Territorial</div>
-            <ul class="sidebar__list">
-                <!-- ADMIN -->
-                <li class="sidebar__item sidebar-section--admin">
+            <!-- ADMIN ICA: Catálogos -->
+            <div class="sidebar__section-title sidebar-section--admin">Catálogos ICA</div>
+            <ul class="sidebar__list sidebar-section--admin">
+                <li class="sidebar__item">
                     <a href="#departamentos" class="sidebar__link" data-page="departamentos">
-                        <span class="sidebar__icon">🗺️</span><span>Departamentos</span>
+                        <span class="sidebar__icon"></span><span>Departamentos</span>
                     </a>
                 </li>
-                <li class="sidebar__item sidebar-section--admin">
+                <li class="sidebar__item">
                     <a href="#municipios" class="sidebar__link" data-page="municipios">
-                        <span class="sidebar__icon">🏘️</span><span>Municipios</span>
+                        <span class="sidebar__icon"></span><span>Municipios</span>
                     </a>
                 </li>
-                <!-- PRODUCTOR + ADMIN -->
-                <li class="sidebar__item sidebar-section--productor">
-                    <a href="#lugares" class="sidebar__link" data-page="lugares">
-                        <span class="sidebar__icon">🌿</span><span>Lugares de Producción</span>
-                    </a>
-                </li>
-                <!-- PROPIETARIO + ADMIN -->
-                <li class="sidebar__item sidebar-section--propietario">
-                    <a href="#predios" class="sidebar__link" data-page="predios">
-                        <span class="sidebar__icon">🏡</span><span>Predios</span>
-                    </a>
-                </li>
-                <!-- ADMIN: catálogo de cultivos -->
-                <li class="sidebar__item sidebar-section--admin">
+                <li class="sidebar__item">
                     <a href="#cultivos" class="sidebar__link" data-page="cultivos">
-                        <span class="sidebar__icon">🌾</span><span>Cultivos</span>
+                        <span class="sidebar__icon"></span><span>Cultivos</span>
                     </a>
                 </li>
-                <!-- ADMIN: catálogo de plagas -->
-                <li class="sidebar__item sidebar-section--admin">
+                <li class="sidebar__item">
                     <a href="#plagas" class="sidebar__link" data-page="plagas">
-                        <span class="sidebar__icon">🐛</span><span>Catálogo de Plagas</span>
-                    </a>
-                </li>
-                <!-- PRODUCTOR + ADMIN -->
-                <li class="sidebar__item sidebar-section--productor">
-                    <a href="#lotes" class="sidebar__link" data-page="lotes">
-                        <span class="sidebar__icon">🌱</span><span>Lotes</span>
+                        <span class="sidebar__icon"></span><span>Catálogo de Plagas</span>
                     </a>
                 </li>
             </ul>
 
-            <!-- ASISTENTE TÉCNICO + ADMIN: Inspecciones -->
+            <!-- PRODUCTOR: Gestión de producción (Caso de uso: gestionar lugar de produccion) -->
+            <div class="sidebar__section-title sidebar-section--productor">Mi Producción</div>
+            <ul class="sidebar__list sidebar-section--productor">
+                <li class="sidebar__item">
+                    <a href="#lugares" class="sidebar__link" data-page="lugares">
+                        <span class="sidebar__icon"></span><span>Lugares de Producción</span>
+                    </a>
+                </li>
+                <li class="sidebar__item">
+                    <a href="#lotes" class="sidebar__link" data-page="lotes">
+                        <span class="sidebar__icon"></span><span>Lotes</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- PROPIETARIO: Gestión de predios (Caso de uso: gestionar predios) -->
+            <div class="sidebar__section-title sidebar-section--propietario">Mis Predios</div>
+            <ul class="sidebar__list sidebar-section--propietario">
+                <li class="sidebar__item">
+                    <a href="#predios" class="sidebar__link" data-page="predios">
+                        <span class="sidebar__icon"></span><span>Predios</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- FITOSANIDAD: Todos los roles acceden a inspecciones según rol -->
+            <!-- Productor: programa inspecciones | Propietario: ve sus informes -->
+            <!-- AsistenteTécnico: ejecuta inspecciones | Admin: aprueba y genera informes -->
             <div class="sidebar__section-title sidebar-section--inspector">Fitosanidad</div>
             <ul class="sidebar__list sidebar-section--inspector">
                 <li class="sidebar__item">
                     <a href="#inspecciones" class="sidebar__link" data-page="inspecciones">
-                        <span class="sidebar__icon">🔬</span><span>Inspecciones</span>
+                        <span class="sidebar__icon"></span><span>Inspecciones</span>
                     </a>
                 </li>
                 <li class="sidebar__item">
                     <a href="#reportes" class="sidebar__link" data-page="reportes">
-                        <span class="sidebar__icon">📈</span><span>Reportes</span>
+                        <span class="sidebar__icon"></span><span>Reportes</span>
                     </a>
                 </li>
             </ul>
@@ -182,11 +188,11 @@ function getRole() {
 
 function getRoleLabel(role) {
     const map = {
-        ADMINISTRADOR:    '👑 Administrador',
-        PROPIETARIO:      '🏡 Propietario',
-        PRODUCTOR:        '🌱 Productor',
-        ASISTENTE_TECNICO:'🔬 Asistente Técnico',
-        CONSULTOR:        '📋 Consultor'
+        ADMINISTRADOR:    'Administrador',
+        PROPIETARIO:      'Propietario',
+        PRODUCTOR:        'Productor',
+        ASISTENTE_TECNICO:'Asistente Técnico',
+        CONSULTOR:        'Consultor'
     };
     return map[role] || role || '—';
 }
@@ -260,10 +266,10 @@ async function loadPage(page) {
             console.error('Error cargando página', page, err);
             container.innerHTML = `
                 <div class="error-state">
-                    <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+                    
                     <h3>Error al cargar ${page}</h3>
                     <p style="color:#8a94a6;margin:8px 0 20px">${err?.message || 'No se pudo conectar con el servidor'}</p>
-                    <button class="btn btn-secondary" onclick="loadPage('${page}')">🔄 Reintentar</button>
+                    <button class="btn btn-secondary" onclick="loadPage('${page}')">Reintentar</button>
                     <button class="btn btn-secondary" onclick="loadPage('dashboard')" style="margin-left:8px">← Inicio</button>
                 </div>`;
         }
@@ -280,7 +286,7 @@ async function renderDashboard(container) {
     const user = getUser();
     const nombre = user.nombre || user.name || 'Usuario';
     const hora = new Date().getHours();
-    const saludo = hora < 12 ? '🌅 Buenos días' : hora < 18 ? '☀️ Buenas tardes' : '🌙 Buenas noches';
+    const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
     const roleCls = role.toLowerCase().replace(/_/g, '-');
 
     // ── Contenido según rol ──────────────────────────────────────────────────
@@ -301,7 +307,7 @@ async function renderDashboard(container) {
         ${statsHTML}
 
         <div class="dashboard-quicklinks">
-            <h3 class="section-title">⚡ Acceso Rápido</h3>
+            <h3 class="section-title">Acceso Rápido</h3>
             <div class="quicklinks-grid">
                 ${quicklinksConfig.map(q => `
                     <button class="quicklink-card" onclick="loadPage('${q.page}')">
@@ -325,52 +331,53 @@ async function renderDashboard(container) {
 // ── Stats HTML por rol ──────────────────────────────────────────────────────
 
 function _dashStatsHTML(role) {
+    // Stats por rol según casos de uso - InformacionImportante.docx
     if (role === 'ADMINISTRADOR') {
         return `<div class="stats-grid stats-grid--4">
-            <div class="stat-card stat-card--green"><div class="stat-card__icon">👥</div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-pend-aprobacion">—</div><div class="stat-card__label">Pend. Aprobación</div></div></div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-aprobadas">—</div><div class="stat-card__label">Aprobadas</div></div></div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-usuarios">—</div><div class="stat-card__label">Usuarios</div></div></div>
-            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🏡</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-predios">—</div><div class="stat-card__label">Predios</div></div></div>
-            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🔬</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
-            <div class="stat-card stat-card--red"><div class="stat-card__icon">🐛</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-plagas">—</div><div class="stat-card__label">Plagas en Catálogo</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-plagas">—</div><div class="stat-card__label">Plagas Catálogo</div></div></div>
         </div>`;
     }
     if (role === 'PROPIETARIO') {
         return `<div class="stats-grid stats-grid--4">
-            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🏡</div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-predios">—</div><div class="stat-card__label">Mis Predios</div></div></div>
-            <div class="stat-card stat-card--green"><div class="stat-card__icon">🌾</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-cultivos">—</div><div class="stat-card__label">Cultivos Registrados</div></div></div>
-            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🔬</div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
-            <div class="stat-card stat-card--red"><div class="stat-card__icon">✅</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-completadas">—</div><div class="stat-card__label">Completadas</div></div></div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-completadas">—</div><div class="stat-card__label">Informes Disponibles</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-pendientes">—</div><div class="stat-card__label">Pendientes</div></div></div>
         </div>`;
     }
     if (role === 'PRODUCTOR') {
         return `<div class="stats-grid stats-grid--4">
-            <div class="stat-card stat-card--green"><div class="stat-card__icon">🌿</div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-lugares">—</div><div class="stat-card__label">Lugares de Producción</div></div></div>
-            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🌱</div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-lotes">—</div><div class="stat-card__label">Lotes Activos</div></div></div>
-            <div class="stat-card stat-card--orange"><div class="stat-card__icon">🌾</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-cosechados">—</div><div class="stat-card__label">Cosechados</div></div></div>
-            <div class="stat-card stat-card--red"><div class="stat-card__icon">🔬</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Inspecciones</div></div></div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-inspecciones">—</div><div class="stat-card__label">Mis Inspecciones</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-pend-insp">—</div><div class="stat-card__label">Programadas</div></div></div>
         </div>`;
     }
     if (role === 'ASISTENTE_TECNICO') {
         return `<div class="stats-grid stats-grid--4">
-            <div class="stat-card stat-card--orange"><div class="stat-card__icon">⏳</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-pendientes">—</div><div class="stat-card__label">Pendientes</div></div></div>
-            <div class="stat-card stat-card--blue"><div class="stat-card__icon">🔄</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-progreso">—</div><div class="stat-card__label">En Progreso</div></div></div>
-            <div class="stat-card stat-card--green"><div class="stat-card__icon">✅</div>
+            <div class="stat-card stat-card--orange"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-pendientes">—</div><div class="stat-card__label">Programadas</div></div></div>
+            <div class="stat-card stat-card--blue"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-progreso">—</div><div class="stat-card__label">En Proceso</div></div></div>
+            <div class="stat-card stat-card--red"><div class="stat-card__icon"></div>
+                <div class="stat-card__body"><div class="stat-card__value" id="d-revision">—</div><div class="stat-card__label">Pend. Revisión</div></div></div>
+            <div class="stat-card stat-card--green"><div class="stat-card__icon"></div>
                 <div class="stat-card__body"><div class="stat-card__value" id="d-completadas">—</div><div class="stat-card__label">Completadas</div></div></div>
-            <div class="stat-card stat-card--red"><div class="stat-card__icon">🐛</div>
-                <div class="stat-card__body"><div class="stat-card__value" id="d-plagas-det">—</div><div class="stat-card__label">Plagas Detectadas</div></div></div>
         </div>`;
     }
     return '';
@@ -379,25 +386,26 @@ function _dashStatsHTML(role) {
 // ── Quicklinks por rol ──────────────────────────────────────────────────────
 
 function _dashQuicklinks(role) {
+    // Quicklinks basados en casos de uso del documento InformacionImportante.docx
     if (role === 'ADMINISTRADOR') return [
-        { icon:'👥', label:'Gestionar Usuarios',    page:'usuarios' },
-        { icon:'🌾', label:'Registrar Cultivos',    page:'cultivos' },
-        { icon:'🐛', label:'Catálogo de Plagas',    page:'plagas' },
-        { icon:'🔬', label:'Ver Inspecciones',       page:'inspecciones' }
+        { icon:'', label:'Aprobar Inspecciones',  page:'inspecciones' },
+        { icon:'', label:'Generar Informes',       page:'reportes' },
+        { icon:'', label:'Gestionar Usuarios',    page:'usuarios' },
+        { icon:'', label:'Cultivos y Plagas',     page:'cultivos' }
     ];
     if (role === 'PROPIETARIO') return [
-        { icon:'🏡', label:'Mis Predios',           page:'predios' },
-        { icon:'🔬', label:'Inspecciones',           page:'inspecciones' },
-        { icon:'📈', label:'Reportes',               page:'reportes' }
+        { icon:'', label:'Mis Predios',           page:'predios' },
+        { icon:'', label:'Mis Informes',          page:'reportes' },
+        { icon:'', label:'Ver Inspecciones',      page:'inspecciones' }
     ];
     if (role === 'PRODUCTOR') return [
-        { icon:'🌿', label:'Lugares de Producción', page:'lugares' },
-        { icon:'🌱', label:'Mis Lotes',             page:'lotes' },
-        { icon:'🔬', label:'Inspecciones',           page:'inspecciones' }
+        { icon:'', label:'Programar Inspección',  page:'inspecciones' },
+        { icon:'', label:'Lugares de Producción', page:'lugares' },
+        { icon:'', label:'Mis Lotes',             page:'lotes' }
     ];
     if (role === 'ASISTENTE_TECNICO') return [
-        { icon:'🔬', label:'Ir a Inspecciones',     page:'inspecciones' },
-        { icon:'📈', label:'Ver Reportes',           page:'reportes' }
+        { icon:'', label:'Mis Inspecciones',      page:'inspecciones' },
+        { icon:'', label:'Ver Reportes',          page:'reportes' }
     ];
     return [];
 }
@@ -409,256 +417,296 @@ function _loadDashStats(role) {
     const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
     if (role === 'ADMINISTRADOR') {
+        // ADMIN ICA: stats de inspecciones pendientes de aprobación (caso de uso: Aprobar Inspección)
         Promise.allSettled([
             apiUsuarios.get(Endpoints.USUARIOS.LIST),
-            apiTerritorial.get(Endpoints.TERRITORIAL.PREDIOS.LIST),
             apiInspecciones.get(Endpoints.INSPECCIONES.LIST),
             apiTerritorial.get(Endpoints.TERRITORIAL.PLAGAS.LIST)
-        ]).then(([u,p,i,pl]) => {
-            if(u.status==='fulfilled')  set('d-usuarios',     arr(u.value).length);
-            if(p.status==='fulfilled')  set('d-predios',      arr(p.value).length);
-            if(i.status==='fulfilled')  set('d-inspecciones', arr(i.value).length);
-            if(pl.status==='fulfilled') set('d-plagas',       arr(pl.value).length);
+        ]).then(([u,i,pl]) => {
+            if(u.status==='fulfilled') set('d-usuarios', arr(u.value).length);
+            if(pl.status==='fulfilled') set('d-plagas', arr(pl.value).length);
+            if(i.status==='fulfilled') {
+                const insp = arr(i.value);
+                set('d-pend-aprobacion', insp.filter(x=>x.estado==='PENDIENTE_REVISION').length);
+                set('d-aprobadas',       insp.filter(x=>x.estado==='COMPLETADA').length);
+            }
         }).catch(()=>{});
     }
     else if (role === 'PROPIETARIO') {
+        // PROPIETARIO: stats de predios e inspecciones de sus predios
         Promise.allSettled([
             apiTerritorial.get(Endpoints.TERRITORIAL.PREDIOS.LIST),
-            apiTerritorial.get(Endpoints.TERRITORIAL.CULTIVOS.LIST),
             apiInspecciones.get(Endpoints.INSPECCIONES.LIST)
-        ]).then(([p,c,i]) => {
-            if(p.status==='fulfilled') set('d-predios',    arr(p.value).length);
-            if(c.status==='fulfilled') set('d-cultivos',   arr(c.value).length);
+        ]).then(([p,i]) => {
+            if(p.status==='fulfilled') set('d-predios', arr(p.value).length);
             if(i.status==='fulfilled') {
                 const insp = arr(i.value);
                 set('d-inspecciones', insp.length);
                 set('d-completadas',  insp.filter(x=>x.estado==='COMPLETADA').length);
+                set('d-pendientes',   insp.filter(x=>x.estado==='PROGRAMADA').length);
             }
         }).catch(()=>{});
     }
     else if (role === 'PRODUCTOR') {
+        // PRODUCTOR: lugares de producción + lotes + inspecciones programadas (caso de uso: Programar Inspección)
         Promise.allSettled([
             apiTerritorial.get(Endpoints.TERRITORIAL.LUGARES.LIST),
             apiTerritorial.get(Endpoints.TERRITORIAL.LOTES.LIST),
             apiInspecciones.get(Endpoints.INSPECCIONES.LIST)
         ]).then(([l,lo,i]) => {
-            if(l.status==='fulfilled')  set('d-lugares',    arr(l.value).length);
+            if(l.status==='fulfilled') set('d-lugares', arr(l.value).length);
             if(lo.status==='fulfilled') {
-                const lotes = arr(lo.value);
-                set('d-lotes',      lotes.filter(x=>x.estado==='EN_PRODUCCION').length);
-                set('d-cosechados', lotes.filter(x=>x.estado==='COSECHADO').length);
+                set('d-lotes', arr(lo.value).filter(x=>x.estado==='EN_PRODUCCION').length);
             }
-            if(i.status==='fulfilled')  set('d-inspecciones', arr(i.value).length);
+            if(i.status==='fulfilled') {
+                const insp = arr(i.value);
+                set('d-inspecciones', insp.length);
+                set('d-pend-insp',   insp.filter(x=>x.estado==='PROGRAMADA').length);
+            }
         }).catch(()=>{});
     }
     else if (role === 'ASISTENTE_TECNICO') {
+        // ASISTENTE: inspecciones asignadas y estado de las mismas
         apiInspecciones.get(Endpoints.INSPECCIONES.LIST).then(res => {
             const insp = arr(res);
             set('d-pendientes',  insp.filter(x=>x.estado==='PROGRAMADA').length);
             set('d-progreso',    insp.filter(x=>x.estado==='EN_PROCESO').length);
+            set('d-revision',    insp.filter(x=>x.estado==='PENDIENTE_REVISION').length);
             set('d-completadas', insp.filter(x=>x.estado==='COMPLETADA').length);
-            // contar plagas detectadas en detalles
-            const totalPlagas = insp.reduce((s,i)=>s+(i.detalles?.reduce((a,d)=>a+(d.plagas?.length||0),0)||0),0);
-            set('d-plagas-det', totalPlagas || '—');
         }).catch(()=>{});
     }
 }
 
-// ── Panel de destinos para ASISTENTE TÉCNICO ────────────────────────────────
+// ── Panel de Agenda para ASISTENTE TÉCNICO (nuevo esquema) ──────────────────
 
 async function _renderAsistenteDashboard(container) {
     if (!container) return;
     container.innerHTML = `
         <div class="at-section-header">
-            <h3 class="section-title">📍 Mis Destinos de Inspección</h3>
-            <p class="section-subtitle">Inspecciones pendientes y en progreso con información de localización</p>
+            <h3 class="section-title">Mi Agenda de Inspecciones</h3>
+            <p class="section-subtitle">Inspecciones fitosanitarias hortifrutícolas asignadas</p>
         </div>
         <div id="at-destinos-grid" class="at-destinos-grid">
-            ${[1,2,3].map(()=>`<div class="at-destino-card at-destino-card--skeleton">
+            ${[1,2,3].map(()=>`<div class="at-destino-card at-destino-card--pendiente">
                 <div class="skeleton" style="height:18px;width:60%;margin-bottom:10px"></div>
                 <div class="skeleton" style="height:13px;width:90%;margin-bottom:6px"></div>
-                <div class="skeleton" style="height:13px;width:75%;margin-bottom:6px"></div>
-                <div class="skeleton" style="height:13px;width:80%"></div>
+                <div class="skeleton" style="height:13px;width:75%"></div>
             </div>`).join('')}
         </div>`;
 
     try {
-        // Traer inspecciones pendientes y en progreso
-        const [inspRes, lotesRes] = await Promise.allSettled([
+        const arr = v => Array.isArray(v) ? v : (v?.data ?? v?.content ?? []);
+
+        // Cargar TODOS los datos geográficos necesarios para la cadena de ubicación
+        const [inspRes, lotesRes, lugaresRes, prediosRes, munisRes, depsRes] = await Promise.allSettled([
             apiInspecciones.get(Endpoints.INSPECCIONES.LIST),
-            apiTerritorial.get(Endpoints.TERRITORIAL.LOTES.LIST)
+            apiTerritorial.get(Endpoints.TERRITORIAL.LOTES.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.LUGARES.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.PREDIOS.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.MUNICIPIOS.LIST),
+            apiTerritorial.get(Endpoints.TERRITORIAL.DEPARTAMENTOS.LIST)
         ]);
 
-        const arr = v => Array.isArray(v) ? v : (v?.data ?? v?.content ?? []);
-        const inspecciones = arr(inspRes.value).filter(i =>
-            i.estado === 'PROGRAMADA' || i.estado === 'EN_PROCESO' ||
-            i.estado === 'PENDIENTE'  || i.estado === 'EN_PROGRESO'
-        );
-        const lotes = arr(lotesRes.value);
+        const todasInsps = arr(inspRes.status === 'fulfilled' ? inspRes.value : []);
+        const lotes      = arr(lotesRes.status === 'fulfilled' ? lotesRes.value : []);
+        const lugares    = arr(lugaresRes.status === 'fulfilled' ? lugaresRes.value : []);
+        const predios    = arr(prediosRes.status === 'fulfilled' ? prediosRes.value : []);
+        const munis      = arr(munisRes.status === 'fulfilled' ? munisRes.value : []);
+        const deps       = arr(depsRes.status === 'fulfilled' ? depsRes.value : []);
 
-        // Para cada inspección, construir info de localización completa
+        // Filtrar solo las inspecciones activas (nuevo esquema: PROGRAMADA + EN_PROCESO + COMPLETADA)
+        const inspecciones = todasInsps.filter(i =>
+            ['PROGRAMADA', 'EN_PROCESO', 'COMPLETADA'].includes(i.estado)
+        );
+
         const grid = document.getElementById('at-destinos-grid');
         if (!grid) return;
 
         if (!inspecciones.length) {
             grid.innerHTML = `
                 <div class="at-no-destinos">
-                    <span style="font-size:3rem">🎉</span>
+                    
                     <h4>Sin inspecciones pendientes</h4>
-                    <p>No tienes destinos programados por el momento</p>
-                    <button class="btn btn-primary" onclick="loadPage('inspecciones')">Ver todas las inspecciones</button>
+                    <p>El Administrador ICA no ha asignado inspecciones por el momento</p>
+                    <button class="btn btn-primary" onclick="loadPage('inspecciones')">Ver agenda completa</button>
                 </div>`;
             return;
         }
 
-        // Enriquecer con datos de lote → cultivo → predio → lugar → municipio → departamento
-        const detallesPromises = inspecciones.slice(0, 8).map(async insp => {
+        // Para cada inspección, construir la CADENA COMPLETA DE UBICACIÓN:
+        // Inspección → Detalle → Lote → Lugar de Producción → Predio → Municipio → Departamento
+        const enriquecidas = await Promise.all(inspecciones.slice(0, 6).map(async insp => {
+            const id = insp.idInspeccion || insp.id;
+            let loteInfo   = null;
+            let lugarInfo  = null;
+            let predioInfo = null;
+            let muniInfo   = null;
+            let depInfo    = null;
+
             try {
-                // Buscar lote en la lista cargada o hacer get individual
-                const loteId = insp.idLote || insp.loteId || insp.lote?.id;
-                let lote = lotes.find(l => l.id === loteId);
-                if (!lote && loteId) {
-                    lote = await apiTerritorial.get(
-                        Endpoints.TERRITORIAL.LOTES.GET(loteId)
-                    ).catch(() => null);
-                }
+                // Paso 1: Buscar detalles para obtener idLote (nuevo esquema)
+                const dets = await apiInspecciones.get(
+                    Endpoints.INSPECCIONES.DETALLES.LIST(id)
+                ).catch(() => []);
+                const detalles = Array.isArray(dets) ? dets : [];
+                const primerDet = detalles[0];
 
-                // Subir la cadena: lote → cultivo → predio → lugar → municipio → dep
-                let cultivoNombre = lote?.cultivoNombre || lote?.cultivo?.nombreComun || lote?.cultivo?.especie || '—';
-                let plagas = [];
-                let predioNombre  = '—', predioNum = '—';
-                let lugarNombre   = '—', vereda = '—';
-                let municipioNombre = '—', depNombre = '—';
+                if (primerDet?.idLote) {
+                    // Paso 2: Lote → Cultivo + Lugar de Producción
+                    loteInfo = lotes.find(l => l.id === primerDet.idLote) || null;
 
-                // Fetch cultivo to get predioId and plagas
-                const cultivoId = lote?.cultivoId || lote?.cultivo?.id;
-                let predioId = lote?.cultivo?.predioId || lote?.cultivo?.predio?.id;
-                if (cultivoId && !predioId) {
-                    const cultivo = await apiTerritorial.get(
-                        Endpoints.TERRITORIAL.CULTIVOS.GET(cultivoId)
-                    ).catch(() => null);
-                    if (cultivo) {
-                        cultivoNombre = cultivo.nombreComun || cultivo.nombreVariedad || cultivoNombre;
-                        predioId = cultivo.predioId;
-                        plagas = cultivo.plagas || [];
-                    }
-                }
-                if (predioId) {
-                    const predio = await apiTerritorial.get(
-                        Endpoints.TERRITORIAL.PREDIOS.GET(predioId)
-                    ).catch(() => null);
-                    if (predio) {
-                        predioNombre = predio.nombre || predio.nombrePredio || '—';
-                        predioNum    = predio.numeroPredial || '—';
-                        const lugarId = predio.lugarProduccionId || predio.lugarProduccion?.id;
-                        if (lugarId) {
-                            const lugar = await apiTerritorial.get(
-                                Endpoints.TERRITORIAL.LUGARES.GET(lugarId)
-                            ).catch(() => null);
-                            if (lugar) {
-                                lugarNombre = lugar.nombre || '—';
-                                vereda = lugar.vereda || lugar.sector || '—';
-                                const munId = lugar.municipioId || lugar.municipio?.id;
-                                if (munId) {
-                                    const mun = await apiTerritorial.get(
-                                        Endpoints.TERRITORIAL.MUNICIPIOS.GET(munId)
-                                    ).catch(() => null);
-                                    if (mun) {
-                                        municipioNombre = mun.nombre || '—';
-                                        const depId = mun.departamentoId || mun.departamento?.id;
-                                        if (depId) {
-                                            const dep = await apiTerritorial.get(
-                                                Endpoints.TERRITORIAL.DEPARTAMENTOS.GET(depId)
-                                            ).catch(() => null);
-                                            depNombre = dep?.nombre || '—';
-                                        }
-                                    }
-                                }
+                    if (loteInfo?.idLugar) {
+                        // Paso 3: Lugar de Producción
+                        lugarInfo = lugares.find(lg => lg.id === loteInfo.idLugar) || null;
+
+                        // Paso 4: Predio (busca el predio que referencia este lugar)
+                        predioInfo = predios.find(p =>
+                            p.lugarProduccionId === loteInfo.idLugar ||
+                            p.lugarProduccion?.id === loteInfo.idLugar
+                        ) || null;
+
+                        if (predioInfo?.municipioId) {
+                            // Paso 5: Municipio
+                            muniInfo = munis.find(m => m.id === predioInfo.municipioId) || null;
+
+                            if (muniInfo?.departamentoId) {
+                                // Paso 6: Departamento
+                                depInfo = deps.find(d => d.id === muniInfo.departamentoId) || null;
                             }
                         }
                     }
                 }
+            } catch(e) { console.warn('Error enriqueciendo inspección', id, e); }
 
-                return { insp, lote, cultivoNombre, plagas, predioNombre, predioNum, lugarNombre, vereda, municipioNombre, depNombre };
-            } catch {
-                return { insp, lote: null, cultivoNombre:'—', predioNombre:'—', predioNum:'—', lugarNombre:'—', vereda:'—', municipioNombre:'—', depNombre:'—' };
-            }
-        });
+            return { insp, loteInfo, lugarInfo, predioInfo, muniInfo, depInfo };
+        }));
 
-        const destinos = await Promise.all(detallesPromises);
-        const fecha = d => d.insp.fechaInspeccion
-            ? new Date(d.insp.fechaInspeccion).toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'})
-            : '—';
-        const estadoColor = e => (e === 'EN_PROCESO' || e === 'EN_PROGRESO') ? 'at-destino-card--progreso' : 'at-destino-card--pendiente';
-        const estadoLabel = e => (e === 'EN_PROCESO' || e === 'EN_PROGRESO')
-            ? `<span class="badge badge--info">🔄 En Proceso</span>`
-            : `<span class="badge badge--warning">⏳ Programada</span>`;
+        // Renderizar tarjetas mejoradas
+        const estadoColorMap = {
+            EN_PROCESO: 'at-destino-card--progreso',
+            COMPLETADA: 'at-destino-card--progreso',
+            PROGRAMADA: 'at-destino-card--pendiente'
+        };
+        const estadoBadgeMap = {
+            EN_PROCESO: `<span class="badge badge--info">En Proceso</span>`,
+            COMPLETADA: `<span class="badge badge--success">Completada</span>`,
+            PROGRAMADA: `<span class="badge badge--warning">Programada</span>`
+        };
+        const accionBtnMap = {
+            EN_PROCESO: `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); loadPage('inspecciones')">Ir a Conteo de Plantas</button>`,
+            COMPLETADA: `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); loadPage('inspecciones')">Enviar a Admin ICA</button>`,
+            PROGRAMADA: `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); loadPage('inspecciones')">Comenzar Inspección</button>`
+        };
 
-        grid.innerHTML = destinos.map(d => `
-            <div class="at-destino-card ${estadoColor(d.insp.estado)}"
-                 onclick="loadPage('inspecciones')" title="Ver inspección">
+        grid.innerHTML = enriquecidas.map(({ insp, loteInfo, lugarInfo, predioInfo, muniInfo, depInfo }) => {
+            const estado     = insp.estado || 'PROGRAMADA';
+            const colorClass = estadoColorMap[estado] || 'at-destino-card--pendiente';
+            const badge      = estadoBadgeMap[estado] || estadoBadgeMap.PROGRAMADA;
+            const accion     = accionBtnMap[estado] || accionBtnMap.PROGRAMADA;
+            const fecha      = insp.fechaInspeccion
+                ? new Date(insp.fechaInspeccion + 'T00:00:00').toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long' })
+                : '—';
+            const codigo = insp.numeroInspeccion || insp.codigoIca || ('#' + (insp.idInspeccion || insp.id));
+            const tipo   = insp.tipo || insp.tipoInspeccion || 'Rutinaria';
+            const tieneUbicacion = loteInfo || lugarInfo || predioInfo || muniInfo || depInfo;
+
+            return `
+            <div class="at-destino-card ${colorClass}">
+                <!-- Encabezado: estado y fecha -->
                 <div class="at-destino-card__top">
-                    <div class="at-destino-card__estado">${estadoLabel(d.insp.estado)}</div>
-                    <div class="at-destino-card__fecha">📅 ${fecha(d)}</div>
+                    <div>${badge}</div>
+                    <div class="at-destino-card__fecha">${fecha}</div>
+                </div>
+                <div style="font-size:0.72rem;color:#8a94a6;margin:2px 0 8px;font-family:monospace">
+                    ${codigo} · ${tipo}
                 </div>
 
+                <!-- Cultivo / Lote -->
                 <div class="at-destino-card__cultivo">
                     <span class="crop-dot"></span>
-                    <strong>🌾 ${d.cultivoNombre}</strong>
-                    <span class="text-muted" style="font-size:0.78rem">
-                        · Lote: ${d.lote?.numero || d.lote?.nombre || d.insp.idLote || '—'}
-                    </span>
+                    ${loteInfo
+                        ? `<strong>${loteInfo.nombre||'Lote'}</strong>
+                           <span class="text-muted" style="font-size:0.78rem"> — ${loteInfo.cultivoNombre||'Cultivo hortifrutícola'}</span>`
+                        : `<strong>${tipo} Fitosanitaria</strong>
+                           <span class="text-muted" style="font-size:0.78rem"> — sin lote asignado aún</span>`
+                    }
                 </div>
 
+                <!-- ══ CADENA DE UBICACIÓN COMPLETA ══ -->
                 <div class="at-destino-card__localizacion">
+                    ${depInfo ? `
                     <div class="at-loc-row">
-                        <span class="at-loc-icon">🏛️</span>
+                        <span class="at-loc-icon">Dep.:</span>
                         <div class="at-loc-info">
                             <span class="at-loc-label">Departamento</span>
-                            <span class="at-loc-value">${d.depNombre}</span>
+                            <span class="at-loc-value">${depInfo.nombre}</span>
                         </div>
-                    </div>
+                    </div>` : ''}
+
+                    ${muniInfo ? `
                     <div class="at-loc-row">
-                        <span class="at-loc-icon">🏘️</span>
+                        <span class="at-loc-icon">Mun.:</span>
                         <div class="at-loc-info">
                             <span class="at-loc-label">Municipio</span>
-                            <span class="at-loc-value">${d.municipioNombre}</span>
+                            <span class="at-loc-value">${muniInfo.nombre}</span>
                         </div>
-                    </div>
+                    </div>` : ''}
+
+                    ${predioInfo?.vereda ? `
                     <div class="at-loc-row">
-                        <span class="at-loc-icon">🌿</span>
+                        <span class="at-loc-icon">Vereda:</span>
                         <div class="at-loc-info">
-                            <span class="at-loc-label">Lugar de Producción · Vereda</span>
-                            <span class="at-loc-value">${d.lugarNombre} ${d.vereda !== '—' ? '· <em>'+d.vereda+'</em>' : ''}</span>
+                            <span class="at-loc-label">Vereda</span>
+                            <span class="at-loc-value">${predioInfo.vereda}</span>
                         </div>
-                    </div>
+                    </div>` : ''}
+
+                    ${lugarInfo ? `
                     <div class="at-loc-row">
-                        <span class="at-loc-icon">🏡</span>
+                        <span class="at-loc-icon">Lugar:</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Lugar de Producción</span>
+                            <span class="at-loc-value">${lugarInfo.nombre}${lugarInfo.area ? ' · '+lugarInfo.area+' ha' : ''}</span>
+                        </div>
+                    </div>` : ''}
+
+                    ${predioInfo ? `
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">Predio:</span>
                         <div class="at-loc-info">
                             <span class="at-loc-label">Predio · N° Predial</span>
-                            <span class="at-loc-value">${d.predioNombre} ${d.predioNum !== '—' ? '· <code>'+d.predioNum+'</code>' : ''}</span>
+                            <span class="at-loc-value">${predioInfo.nombre}${predioInfo.numeroPredial ? ' · <code>'+predioInfo.numeroPredial+'</code>' : ''}</span>
                         </div>
-                    </div>
-                </div>
+                    </div>` : ''}
 
-                ${d.plagas && d.plagas.length ? `
-                <div class="at-destino-card__plagas">
-                    <span class="at-plagas-label">🦠 Plagas detectadas:</span>
-                    <div class="at-plagas-list">
-                        ${d.plagas.map(p => `<span class="at-plaga-tag at-plaga-tag--${(p.nivelRiesgo||'').toLowerCase()}" title="${p.nombreCientifico||''}">${p.nombreComun||p.nombre||'Plaga'}</span>`).join('')}
-                    </div>
-                </div>` : ''}
+                    ${loteInfo?.fechaSiembra ? `
+                    <div class="at-loc-row">
+                        <span class="at-loc-icon">Cultivo:</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Cultivo · Fecha Siembra</span>
+                            <span class="at-loc-value">${loteInfo.cultivoNombre||'—'} · ${new Date(loteInfo.fechaSiembra+'T00:00:00').toLocaleDateString('es-CO')}</span>
+                        </div>
+                    </div>` : ''}
+
+                    ${!tieneUbicacion ? `
+                    <div class="at-loc-row" style="background:#fff8e1;border-color:#ffa726">
+                        <span class="at-loc-icon">Ubi.:</span>
+                        <div class="at-loc-info">
+                            <span class="at-loc-label">Ubicación</span>
+                            <span class="at-loc-value" style="color:#e65100">Registre el conteo para ver la ubicación</span>
+                        </div>
+                    </div>` : ''}
+                </div>
 
                 <div class="at-destino-card__footer">
-                    <button class="btn btn-primary btn-sm"
-                        onclick="event.stopPropagation(); loadPage('inspecciones')">
-                        🔬 Ver Inspección
-                    </button>
+                    ${accion}
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
 
     } catch(e) {
-        if (container) container.innerHTML = `<div class="error-state"><p>No se pudieron cargar los destinos</p></div>`;
+        const grid = document.getElementById('at-destinos-grid');
+        if (grid) grid.innerHTML = `<div class="error-state"><p>No se pudo cargar la agenda: ${e.message}</p><button class="btn btn-secondary btn-sm" onclick="loadPage('inspecciones')">Ir a Inspecciones</button></div>`;
     }
 }
 
