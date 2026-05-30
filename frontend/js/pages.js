@@ -137,15 +137,22 @@ class BasePage {
 
     badgeEstado(estado) {
         const map = {
-            ACTIVO:      ['badge--success','✅ Activo'],
-            INACTIVO:    ['badge--danger', '❌ Inactivo'],
-            PENDIENTE:   ['badge--warning','⏳ Pendiente'],
-            EN_PROGRESO: ['badge--info',   '🔄 En Progreso'],
-            COMPLETADA:  ['badge--success','✅ Completada'],
-            CANCELADA:   ['badge--danger', '❌ Cancelada'],
-            PLANIFICADO: ['badge--secondary','📋 Planificado'],
-            EN_PRODUCCION:['badge--info',  '🌱 En Producción'],
-            COSECHADO:   ['badge--success','🌾 Cosechado'],
+            ACTIVO:           ['badge--success', '✅ Activo'],
+            INACTIVO:         ['badge--danger',  '❌ Inactivo'],
+            // Inspecciones (enums reales del backend)
+            PROGRAMADA:       ['badge--warning', '⏳ Programada'],
+            EN_PROCESO:       ['badge--info',    '🔄 En Proceso'],
+            COMPLETADA:       ['badge--success', '✅ Completada'],
+            CANCELADA:        ['badge--danger',  '❌ Cancelada'],
+            PENDIENTE_REVISION:['badge--warning','🔍 Pend. Revisión'],
+            // Compatibilidad con nombres alternativos
+            PENDIENTE:        ['badge--warning', '⏳ Pendiente'],
+            EN_PROGRESO:      ['badge--info',    '🔄 En Progreso'],
+            // Lotes
+            PLANIFICADO:      ['badge--secondary','📋 Planificado'],
+            EN_PRODUCCION:    ['badge--info',    '🌱 En Producción'],
+            COSECHADO:        ['badge--success', '🌾 Cosechado'],
+            ABANDONADO:       ['badge--danger',  '🚫 Abandonado'],
         };
         const [cls, label] = map[estado] || ['badge--secondary', estado || '—'];
         return `<span class="badge ${cls}">${label}</span>`;
@@ -208,7 +215,7 @@ class UsuariosPage extends BasePage {
                 <td><span class="row-num">${i+1}</span></td>
                 <td><strong>${u.nombre || u.name || '—'}</strong></td>
                 <td><span class="text-muted">${u.correo || u.email || '—'}</span></td>
-                <td><span class="chip">${u.grupo?.nombre || u.grupoNombre || '—'}</span></td>
+                <td><span class="chip">${u.grupos?.[0]?.nombre || u.grupo?.nombre || u.grupoNombre || '—'}</span></td>
                 <td>${this.badgeEstado(u.estado)}</td>
                 <td class="actions-cell">
                     <button class="btn-icon btn-icon--edit" title="Editar" onclick="usuariosPage._openForm(${u.id})">✏️</button>
@@ -224,6 +231,7 @@ class UsuariosPage extends BasePage {
             try { const u = await apiUsuarios.get(Endpoints.USUARIOS.GET(id)); vals = { nombre: u.nombre||u.name||'', correo: u.correo||u.email||'', grupoId: u.grupo?.id||u.grupoId||'' }; } catch {}
         }
         const body = `
+            ${!id ? `<div class="form-group"><label>N° Identificación</label><input class="form-control" id="f-cedula" placeholder="Cédula o NIT"></div>` : ''}
             <div class="form-group"><label>Nombre completo</label><input class="form-control" id="f-nombre" value="${vals.nombre}" placeholder="Nombre y apellido"></div>
             <div class="form-group"><label>Correo electrónico</label><input class="form-control" id="f-correo" type="email" value="${vals.correo}" placeholder="correo@ejemplo.com"></div>
             ${!id ? `<div class="form-group"><label>Contraseña</label><input class="form-control" id="f-pass" type="password" placeholder="Mínimo 8 caracteres"></div>` : ''}
@@ -231,14 +239,27 @@ class UsuariosPage extends BasePage {
         this.modal.open(id ? 'Editar Usuario' : 'Nuevo Usuario', body, async () => {
             const data = {
                 nombre: document.getElementById('f-nombre')?.value?.trim(),
-                correo: document.getElementById('f-correo')?.value?.trim(),
-                grupoId: parseInt(document.getElementById('f-grupo')?.value)
+                correo: document.getElementById('f-correo')?.value?.trim()
             };
-            if (!id) data.contrasena = document.getElementById('f-pass')?.value;
+            if (!id) {
+                data.password = document.getElementById('f-pass')?.value;
+                data.numeroIdentificacion = document.getElementById('f-cedula')?.value?.trim();
+            }
             if (!data.nombre || !data.correo) { this.modal.setError('Nombre y correo son obligatorios'); return; }
+            if (!id && (!data.password || data.password.length < 8)) { this.modal.setError('La contraseña debe tener al menos 8 caracteres'); return; }
+            if (!id && !data.numeroIdentificacion) { this.modal.setError('El número de identificación es obligatorio'); return; }
+            const grupoId = parseInt(document.getElementById('f-grupo')?.value);
             try {
-                if (id) await apiUsuarios.put(Endpoints.USUARIOS.UPDATE(id), data);
-                else await apiUsuarios.post(Endpoints.USUARIOS.CREATE, data);
+                let savedUser;
+                if (id) {
+                    savedUser = await apiUsuarios.put(Endpoints.USUARIOS.UPDATE(id), { nombre: data.nombre });
+                } else {
+                    savedUser = await apiUsuarios.post(Endpoints.USUARIOS.CREATE, data);
+                    // Asignar grupo al usuario recién creado
+                    if (grupoId && savedUser?.id) {
+                        await apiUsuarios.post(`/api/v1/usuarios/${savedUser.id}/grupos/${grupoId}`, {}).catch(() => {});
+                    }
+                }
                 Notify.success(id ? 'Usuario actualizado' : 'Usuario creado exitosamente');
                 this.modal.close();
                 await this._load();
@@ -250,7 +271,7 @@ class UsuariosPage extends BasePage {
     async _toggleEstado(id, estadoActual) {
         const nuevo = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
         try {
-            await apiUsuarios.patch(Endpoints.USUARIOS.ESTADO(id), { estado: nuevo });
+            await apiUsuarios.patch(Endpoints.USUARIOS.ESTADO(id) + '?estado=' + nuevo);
             Notify.success(`Usuario ${nuevo.toLowerCase()}`);
             await this._load();
         } catch(e) { Notify.error('Error al cambiar estado'); }
@@ -623,22 +644,24 @@ class CultivosPage extends BasePage {
         if (!tbody) return;
         if (!data.length) { tbody.innerHTML = this.emptyRow(7, 'No hay cultivos registrados'); return; }
         const canW = R.canWrite('cultivos');
-        tbody.innerHTML = data.map((c,i) => `
-            <tr>
+        tbody.innerHTML = data.map((c,i) => {
+            const nombre = c.nombreComun || c.nombreVariedad || c.especie || '—';
+            return `<tr>
                 <td><span class="row-num">${i+1}</span></td>
                 <td>
-                    <div class="cell-main"><span class="crop-dot"></span><strong>${c.especie||c.nombreEspecie||'—'}</strong></div>
+                    <div class="cell-main"><span class="crop-dot"></span><strong>${nombre}</strong></div>
                 </td>
-                <td class="text-muted">${c.variedad||'—'}</td>
-                <td>${c.area||c.areaHectareas||'—'} ha</td>
-                <td>${c.predio?.nombre||c.predioNombre||'—'}</td>
-                <td>${this.badgeEstado(c.estado||'ACTIVO')}</td>
+                <td class="text-muted">${c.nombreVariedad || c.variedad || '—'}</td>
+                <td>${c.area || c.areaHectareas || '—'} ha</td>
+                <td>${c.predioNombre || c.predio?.nombre || '—'}</td>
+                <td>${this.badgeEstado(c.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
                 ${canW ? `<td class="actions-cell">
-                    <button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${c.especie||c.nombreEspecie}')">🐛</button>
+                    <button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${nombre}')">🐛</button>
                     <button class="btn-icon btn-icon--edit" onclick="cultivosPage._openForm(${c.id})">✏️</button>
                     <button class="btn-icon btn-icon--delete" onclick="cultivosPage._delete(${c.id})">🗑️</button>
-                </td>` : `<td class="actions-cell"><button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${c.especie||c.nombreEspecie}')">🐛</button></td>`}
-            </tr>`).join('');
+                </td>` : `<td class="actions-cell"><button class="btn-icon btn-icon--info" title="Ver plagas" onclick="cultivosPage._verPlagas(${c.id},'${nombre}')">🐛</button></td>`}
+            </tr>`;
+        }).join('');
     }
 
     async _verPlagas(cultivoId, nombre) {
@@ -678,25 +701,25 @@ class CultivosPage extends BasePage {
         if (id) { try { v = await territorialModule.getCultivo(id); } catch {} }
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Especie</label><input class="form-control" id="f-especie" value="${v.especie||v.nombreEspecie||''}" placeholder="Ej: Tomate, Mango, Aguacate"></div>
-                <div class="form-group"><label>Variedad</label><input class="form-control" id="f-variedad" value="${v.variedad||''}" placeholder="Ej: Cherry, Hass"></div>
+                <div class="form-group"><label>Nombre Común (especie)</label><input class="form-control" id="f-especie" value="${v.nombreComun||v.especie||''}" placeholder="Ej: Tomate, Mango, Aguacate"></div>
+                <div class="form-group"><label>Variedad</label><input class="form-control" id="f-variedad" value="${v.nombreVariedad||v.variedad||''}" placeholder="Ej: Cherry, Hass, Caturra"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Área (ha)</label><input class="form-control" id="f-area" type="number" step="0.01" value="${v.area||v.areaHectareas||''}"></div>
-                <div class="form-group"><label>Fecha de Siembra</label><input class="form-control" id="f-siembra" type="date" value="${v.fechaSiembra||''}"></div>
+                <div class="form-group"><label>Nombre Científico</label><input class="form-control" id="f-cientifico" value="${v.nombreCientifico||''}" placeholder="Ej: Solanum lycopersicum"></div>
+                <div class="form-group"><label>Fecha de Inicio</label><input class="form-control" id="f-siembra" type="date" value="${v.fechaInicio||v.fechaSiembra||''}"></div>
             </div>
             <div class="form-group"><label>Predio</label><select class="form-control" id="f-predio"><option value="">Seleccione...</option>${predioOpts}</select></div>
-            <div class="form-group"><label>Notas</label><textarea class="form-control" id="f-notas" rows="2">${v.notas||v.observaciones||''}</textarea></div>`;
+            <div class="form-group"><label>Descripción</label><textarea class="form-control" id="f-notas" rows="2">${v.descripcion||v.notas||''}</textarea></div>`;
         this.modal.open(id ? 'Editar Cultivo' : 'Registrar Cultivo', body, async () => {
             const data = {
-                especie: document.getElementById('f-especie')?.value?.trim(),
-                variedad: document.getElementById('f-variedad')?.value?.trim(),
-                area: parseFloat(document.getElementById('f-area')?.value),
-                fechaSiembra: document.getElementById('f-siembra')?.value,
+                nombreComun: document.getElementById('f-especie')?.value?.trim(),
+                nombreVariedad: document.getElementById('f-variedad')?.value?.trim(),
+                nombreCientifico: document.getElementById('f-cientifico')?.value?.trim(),
+                fechaInicio: document.getElementById('f-siembra')?.value,
                 predioId: parseInt(document.getElementById('f-predio')?.value),
-                notas: document.getElementById('f-notas')?.value?.trim()
+                descripcion: document.getElementById('f-notas')?.value?.trim()
             };
-            if (!data.especie || !data.predioId) { this.modal.setError('Especie y predio son obligatorios'); return; }
+            if (!data.nombreComun || !data.predioId) { this.modal.setError('Nombre y predio son obligatorios'); return; }
             try {
                 if (id) await territorialModule.updateCultivo(id, data);
                 else await territorialModule.createCultivo(data);
@@ -738,7 +761,7 @@ class LotesPage extends BasePage {
     async _loadCultivos() {
         this._cultivos = await territorialModule.getCultivos().catch(() => []);
         const sel = document.getElementById('filter-cultivo');
-        if (sel) this._cultivos.forEach(c => sel.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.especie||c.nombreEspecie} ${c.variedad ? '- '+c.variedad : ''}</option>`));
+        if (sel) this._cultivos.forEach(c => sel.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||c.especie||'Cultivo'} ${c.nombreVariedad && c.nombreComun ? '- '+c.nombreVariedad : ''}</option>`));
     }
 
     async _load(cultivoId = null) {
@@ -762,8 +785,8 @@ class LotesPage extends BasePage {
                 <button class="btn-icon btn-icon--delete" onclick="lotesPage._delete(${l.id})">🗑️</button>` : '';
             return `<tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td><code>${l.codigoLote||l.codigo||'—'}</code></td>
-                <td><strong>${l.cultivo?.especie||l.cultivoNombre||'—'}</strong></td>
+                <td><code>${l.numero||l.codigoLote||l.codigo||'—'}</code>${l.nombre ? `<br><small class="text-muted">${l.nombre}</small>` : ''}</td>
+                <td><strong>${l.cultivoNombre||l.cultivo?.nombreComun||l.cultivo?.especie||'—'}</strong></td>
                 <td>${l.area||l.areaHectareas||'—'} ha</td>
                 <td>${this.badgeEstado(estado)}</td>
                 <td class="actions-cell">${acciones}</td>
@@ -782,30 +805,41 @@ class LotesPage extends BasePage {
     }
 
     async _openForm(id = null) {
-        const culOpts = this._cultivos.map(c => `<option value="${c.id}">${c.especie||c.nombreEspecie} ${c.variedad ? '- '+c.variedad : ''}</option>`).join('');
         let v = {};
         if (id) { try { v = await territorialModule.getLote(id); } catch {} }
+        const culOpts2 = this._cultivos.map(c => `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||c.especie||'Cultivo'}</option>`).join('');
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Código del Lote</label><input class="form-control" id="f-codigo" value="${v.codigoLote||v.codigo||''}" placeholder="Ej: LOTE-001"></div>
-                <div class="form-group"><label>Área (ha)</label><input class="form-control" id="f-area" type="number" step="0.01" value="${v.area||v.areaHectareas||''}"></div>
+                <div class="form-group"><label>Número del Lote</label><input class="form-control" id="f-codigo" value="${v.numero||v.codigoLote||''}" placeholder="Ej: L-001"></div>
+                <div class="form-group"><label>Nombre del Lote</label><input class="form-control" id="f-nombre" value="${v.nombre||''}" placeholder="Ej: Lote Norte"></div>
             </div>
-            <div class="form-group"><label>Cultivo</label><select class="form-control" id="f-cultivo"><option value="">Seleccione...</option>${culOpts}</select></div>
             <div class="form-row">
-                <div class="form-group"><label>Fecha Inicio</label><input class="form-control" id="f-inicio" type="date" value="${v.fechaInicio||''}"></div>
-                <div class="form-group"><label>Fecha Estimada Cosecha</label><input class="form-control" id="f-cosecha" type="date" value="${v.fechaEstimadaCosecha||''}"></div>
+                <div class="form-group"><label>Área (ha)</label><input class="form-control" id="f-area" type="number" step="0.01" value="${v.area||''}"></div>
+                <div class="form-group"><label>Estado</label>
+                    <select class="form-control" id="f-estado">
+                        <option value="ACTIVO" ${(v.estado||'ACTIVO')==='ACTIVO'?'selected':''}>Activo</option>
+                        <option value="EN_PRODUCCION" ${v.estado==='EN_PRODUCCION'?'selected':''}>En Producción</option>
+                        <option value="COSECHADO" ${v.estado==='COSECHADO'?'selected':''}>Cosechado</option>
+                        <option value="INACTIVO" ${v.estado==='INACTIVO'?'selected':''}>Inactivo</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group"><label>Observaciones</label><textarea class="form-control" id="f-obs" rows="2">${v.observaciones||''}</textarea></div>`;
+            <div class="form-group"><label>Cultivo</label><select class="form-control" id="f-cultivo"><option value="">Seleccione...</option>${culOpts2}</select></div>
+            <div class="form-row">
+                <div class="form-group"><label>Fecha Siembra</label><input class="form-control" id="f-inicio" type="date" value="${v.fechaSiembra||''}"></div>
+                <div class="form-group"><label>Fecha Estimada Cosecha</label><input class="form-control" id="f-cosecha" type="date" value="${v.fechaCosechaEstimada||''}"></div>
+            </div>`;
         this.modal.open(id ? 'Editar Lote' : 'Nuevo Lote', body, async () => {
             const data = {
-                codigoLote: document.getElementById('f-codigo')?.value?.trim(),
-                area: parseFloat(document.getElementById('f-area')?.value),
+                numero: document.getElementById('f-codigo')?.value?.trim(),
+                nombre: document.getElementById('f-nombre')?.value?.trim(),
+                area: parseFloat(document.getElementById('f-area')?.value) || null,
+                estado: document.getElementById('f-estado')?.value || 'ACTIVO',
                 cultivoId: parseInt(document.getElementById('f-cultivo')?.value),
-                fechaInicio: document.getElementById('f-inicio')?.value,
-                fechaEstimadaCosecha: document.getElementById('f-cosecha')?.value,
-                observaciones: document.getElementById('f-obs')?.value?.trim()
+                fechaSiembra: document.getElementById('f-inicio')?.value || null,
+                fechaCosechaEstimada: document.getElementById('f-cosecha')?.value || null
             };
-            if (!data.cultivoId) { this.modal.setError('Debe seleccionar un cultivo'); return; }
+            if (!data.numero || !data.cultivoId) { this.modal.setError('Número de lote y cultivo son obligatorios'); return; }
             try {
                 if (id) await territorialModule.updateLote(id, data);
                 else await territorialModule.createLote(data);
@@ -953,10 +987,11 @@ class InspeccionesPage extends BasePage {
             <div class="filter-row">
                 <select class="form-control form-control--sm" id="filter-estado-insp">
                     <option value="">Todos los estados</option>
-                    <option value="PENDIENTE">⏳ Pendiente</option>
-                    <option value="EN_PROGRESO">🔄 En Progreso</option>
+                    <option value="PROGRAMADA">⏳ Programada</option>
+                    <option value="EN_PROCESO">🔄 En Proceso</option>
                     <option value="COMPLETADA">✅ Completada</option>
                     <option value="CANCELADA">❌ Cancelada</option>
+                    <option value="PENDIENTE_REVISION">🔍 Pend. Revisión</option>
                 </select>
                 ${this.searchBarHTML('Buscar por lote o fecha...')}
             </div>
@@ -991,8 +1026,8 @@ class InspeccionesPage extends BasePage {
         const counts = this._data.reduce((acc, i) => { acc[i.estado] = (acc[i.estado]||0)+1; return acc; }, {});
         el.innerHTML = `
             <div class="stat-mini"><span class="stat-mini__val">${this._data.length}</span><span class="stat-mini__lbl">Total</span></div>
-            <div class="stat-mini stat-mini--warning"><span class="stat-mini__val">${counts.PENDIENTE||0}</span><span class="stat-mini__lbl">Pendientes</span></div>
-            <div class="stat-mini stat-mini--info"><span class="stat-mini__val">${counts.EN_PROGRESO||0}</span><span class="stat-mini__lbl">En Progreso</span></div>
+            <div class="stat-mini stat-mini--warning"><span class="stat-mini__val">${counts.PROGRAMADA||0}</span><span class="stat-mini__lbl">Programadas</span></div>
+            <div class="stat-mini stat-mini--info"><span class="stat-mini__val">${counts.EN_PROCESO||0}</span><span class="stat-mini__lbl">En Proceso</span></div>
             <div class="stat-mini stat-mini--success"><span class="stat-mini__val">${counts.COMPLETADA||0}</span><span class="stat-mini__lbl">Completadas</span></div>`;
     }
 
@@ -1003,17 +1038,18 @@ class InspeccionesPage extends BasePage {
         const canW = R.canWrite('inspecciones');
         tbody.innerHTML = data.map((insp,i) => {
             const fecha = insp.fechaInspeccion ? new Date(insp.fechaInspeccion).toLocaleDateString('es-CO') : '—';
-            const estado = insp.estado || 'PENDIENTE';
+            const estado = insp.estado || 'PROGRAMADA';
+            const inspId = insp.idInspeccion || insp.id;
             const acciones = `
-                <button class="btn-icon btn-icon--info" title="Ver detalle" onclick="inspeccionDetallePage.render(document.getElementById('page-content'), ${insp.id})">👁️</button>
-                ${canW && estado === 'PENDIENTE' ? `<button class="btn-icon btn-icon--success" title="Iniciar" onclick="inspeccionesPage._iniciar(${insp.id})">▶️</button>` : ''}
-                ${canW && estado === 'EN_PROGRESO' ? `<button class="btn-icon btn-icon--primary" title="Completar" onclick="inspeccionesPage._completar(${insp.id})">✅</button>` : ''}
-                ${canW && (estado === 'PENDIENTE' || estado === 'EN_PROGRESO') ? `<button class="btn-icon btn-icon--delete" title="Cancelar" onclick="inspeccionesPage._cancelar(${insp.id})">❌</button>` : ''}`;
+                <button class="btn-icon btn-icon--info" title="Ver detalle" onclick="inspeccionDetallePage.render(document.getElementById('page-content'), ${inspId})">👁️</button>
+                ${canW && estado === 'PROGRAMADA' ? `<button class="btn-icon btn-icon--success" title="Iniciar" onclick="inspeccionesPage._iniciar(${inspId})">▶️</button>` : ''}
+                ${canW && estado === 'EN_PROCESO' ? `<button class="btn-icon btn-icon--primary" title="Completar" onclick="inspeccionesPage._completar(${inspId})">✅</button>` : ''}
+                ${canW && (estado === 'PROGRAMADA' || estado === 'EN_PROCESO') ? `<button class="btn-icon btn-icon--delete" title="Cancelar" onclick="inspeccionesPage._cancelar(${inspId})">❌</button>` : ''}`;
             return `<tr>
                 <td><span class="row-num">${i+1}</span></td>
-                <td>${fecha}</td>
-                <td><strong>${insp.lote?.codigoLote||insp.loteId||'—'}</strong></td>
-                <td class="text-muted">${insp.inspector||insp.inspectorNombre||'—'}</td>
+                <td>${fecha}<br><small class="text-muted">${insp.numeroInspeccion||''}</small></td>
+                <td><strong>Lote ${insp.idLote || insp.loteId || '—'}</strong></td>
+                <td class="text-muted">${insp.nombreInspector || insp.inspector || '—'}</td>
                 <td>${this.badgeEstado(estado)}</td>
                 <td class="actions-cell">${acciones}</td>
             </tr>`;
@@ -1036,33 +1072,47 @@ class InspeccionesPage extends BasePage {
     }
 
     async _openForm(id = null) {
-        const loteOpts = this._lotes.map(l => `<option value="${l.id}">${l.codigoLote||l.codigo||'Lote '+l.id}</option>`).join('');
+        const loteOpts = this._lotes.map(l => `<option value="${l.id}">${l.numero||l.codigoLote||'Lote '+l.id}${l.nombre?' - '+l.nombre:''}</option>`).join('');
         let v = {};
         if (id) { try { v = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)); } catch {} }
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
         const body = `
             <div class="form-row">
                 <div class="form-group"><label>Fecha de Inspección</label><input class="form-control" id="f-fecha" type="date" value="${v.fechaInspeccion||new Date().toISOString().split('T')[0]}"></div>
-                <div class="form-group"><label>Hora</label><input class="form-control" id="f-hora" type="time" value="${v.hora||''}"></div>
+                <div class="form-group"><label>Tipo</label>
+                    <select class="form-control" id="f-tipo">
+                        <option value="RUTINARIA" ${(v.tipoInspeccion||'RUTINARIA')==='RUTINARIA'?'selected':''}>Rutinaria</option>
+                        <option value="EMERGENCIA" ${v.tipoInspeccion==='EMERGENCIA'?'selected':''}>Emergencia</option>
+                        <option value="SEGUIMIENTO" ${v.tipoInspeccion==='SEGUIMIENTO'?'selected':''}>Seguimiento</option>
+                        <option value="CUARENTENA" ${v.tipoInspeccion==='CUARENTENA'?'selected':''}>Cuarentena</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group"><label>Lote a Inspeccionar</label><select class="form-control" id="f-lote"><option value="">Seleccione...</option>${loteOpts}</select></div>
-            <div class="form-group"><label>Objetivo de la Inspección</label><input class="form-control" id="f-objetivo" value="${v.objetivo||''}" placeholder="Ej: Monitoreo de plagas, evaluación daño foliar"></div>
-            <div class="form-group"><label>Observaciones Iniciales</label><textarea class="form-control" id="f-obs" rows="3" placeholder="Condiciones del campo, clima, etc.">${v.observaciones||''}</textarea></div>`;
+            <div class="form-row">
+                <div class="form-group"><label>Nombre del Inspector</label><input class="form-control" id="f-inspector" value="${v.nombreInspector||user.nombre||''}" placeholder="Nombre completo"></div>
+                <div class="form-group"><label>Cédula del Inspector</label><input class="form-control" id="f-cedula" value="${v.cedulaInspector||''}" placeholder="Número de cédula"></div>
+            </div>
+            <div class="form-group"><label>Observaciones</label><textarea class="form-control" id="f-obs" rows="3" placeholder="Condiciones del campo, clima, etc.">${v.observaciones||''}</textarea></div>`;
         this.modal.open(id ? 'Editar Inspección' : 'Programar Nueva Inspección', body, async () => {
             const data = {
                 fechaInspeccion: document.getElementById('f-fecha')?.value,
-                hora: document.getElementById('f-hora')?.value,
-                loteId: parseInt(document.getElementById('f-lote')?.value),
-                objetivo: document.getElementById('f-objetivo')?.value?.trim(),
+                tipoInspeccion: document.getElementById('f-tipo')?.value,
+                estado: v.estado || 'PROGRAMADA',
+                idLote: parseInt(document.getElementById('f-lote')?.value),
+                nombreInspector: document.getElementById('f-inspector')?.value?.trim(),
+                cedulaInspector: document.getElementById('f-cedula')?.value?.trim(),
                 observaciones: document.getElementById('f-obs')?.value?.trim()
             };
-            if (!data.loteId || !data.fechaInspeccion) { this.modal.setError('Fecha y lote son obligatorios'); return; }
+            if (!data.idLote || !data.fechaInspeccion) { this.modal.setError('Fecha y lote son obligatorios'); return; }
+            if (!data.nombreInspector || !data.cedulaInspector) { this.modal.setError('Nombre y cédula del inspector son obligatorios'); return; }
             try {
                 if (id) await apiInspecciones.put(Endpoints.INSPECCIONES.UPDATE(id), data);
                 else await apiInspecciones.post(Endpoints.INSPECCIONES.CREATE, data);
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
-        if (v.loteId) setTimeout(() => { const s = document.getElementById('f-lote'); if(s) s.value = v.loteId; }, 50);
+        if (v.idLote) setTimeout(() => { const s = document.getElementById('f-lote'); if(s) s.value = v.idLote; }, 50);
     }
 }
 
@@ -1116,7 +1166,7 @@ class InspeccionDetallePage extends BasePage {
                 <div class="page-header__icon">🔬</div>
                 <div>
                     <h1 class="page-header__title">Inspección #${inspeccionId}</h1>
-                    <p class="page-header__subtitle">${fecha} · Lote: ${insp.lote?.codigoLote || insp.loteId || '—'} · ${this.badgeEstado(insp.estado)}</p>
+                    <p class="page-header__subtitle">${fecha} · Lote: ${insp.idLote || insp.loteId || '—'} · Tipo: ${insp.tipoInspeccion||'—'} · ${this.badgeEstado(insp.estado)}</p>
                 </div>
             </div>
             <div class="page-header__actions">
@@ -1241,7 +1291,7 @@ class InspeccionDetallePage extends BasePage {
 
     async _addCultivo(inspeccionId) {
         const cultivos = await territorialModule.getCultivos().catch(() => []);
-        const culOpts = cultivos.map(c => `<option value="${c.id}">${c.especie||c.nombreEspecie} ${c.variedad ? '- '+c.variedad : ''}</option>`).join('');
+        const culOpts = cultivos.map(c => `<option value="${c.id}">${c.nombreComun||c.nombreVariedad||c.especie||'Cultivo'} ${c.nombreVariedad&&c.nombreComun ? '- '+c.nombreVariedad : ''}</option>`).join('');
         const body = `
             <div class="form-group"><label>Cultivo</label><select class="form-control" id="f-cultivo-det"><option value="">Seleccione...</option>${culOpts}</select></div>
             <div class="form-row">
@@ -1262,7 +1312,7 @@ class InspeccionDetallePage extends BasePage {
                 Notify.success('Cultivo agregado a la inspección');
                 this.modal.close();
                 await this.render(document.getElementById('page-content'), inspeccionId);
-            } catch(e) { this.modal.setError(e.message); }
+            } catch(e) { this.modal.setError(e.message || 'Error al agregar cultivo'); }
         });
     }
 
@@ -1288,8 +1338,8 @@ class InspeccionDetallePage extends BasePage {
                 await apiInspecciones.post(Endpoints.INSPECCIONES.DETALLES.PLAGAS.CREATE(detalleId), data);
                 Notify.success('Plaga registrada en el detalle');
                 this.modal.close();
-                await this.render(document.getElementById('page-content'), this._inspeccion.id);
-            } catch(e) { this.modal.setError(e.message); }
+                await this.render(document.getElementById('page-content'), this._inspeccion.idInspeccion || this._inspeccion.id);
+            } catch(e) { this.modal.setError(e.message || 'Error al registrar plaga'); }
         });
     }
 
@@ -1298,7 +1348,7 @@ class InspeccionDetallePage extends BasePage {
         try {
             await apiInspecciones.delete(Endpoints.INSPECCIONES.DETALLES.PLAGAS.DELETE(plagaDetId));
             Notify.success('Registro eliminado');
-            await this.render(document.getElementById('page-content'), this._inspeccion.id);
+            await this.render(document.getElementById('page-content'), this._inspeccion.idInspeccion || this._inspeccion.id);
         } catch {}
     }
 }
@@ -1320,8 +1370,9 @@ class ReportesPage extends BasePage {
                         <select class="form-control" id="r-estado">
                             <option value="">Todos</option>
                             <option value="COMPLETADA">Completadas</option>
-                            <option value="PENDIENTE">Pendientes</option>
-                            <option value="EN_PROGRESO">En Progreso</option>
+                            <option value="PROGRAMADA">Programadas</option>
+                            <option value="EN_PROCESO">En Proceso</option>
+                            <option value="CANCELADA">Canceladas</option>
                         </select>
                     </div>
                 </div>

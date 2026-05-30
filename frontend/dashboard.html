@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/modules.css">
 </head>
 <body>
 <div class="app-layout">
@@ -453,8 +454,8 @@ function _loadDashStats(role) {
     else if (role === 'ASISTENTE_TECNICO') {
         apiInspecciones.get(Endpoints.INSPECCIONES.LIST).then(res => {
             const insp = arr(res);
-            set('d-pendientes',  insp.filter(x=>x.estado==='PENDIENTE').length);
-            set('d-progreso',    insp.filter(x=>x.estado==='EN_PROGRESO').length);
+            set('d-pendientes',  insp.filter(x=>x.estado==='PROGRAMADA').length);
+            set('d-progreso',    insp.filter(x=>x.estado==='EN_PROCESO').length);
             set('d-completadas', insp.filter(x=>x.estado==='COMPLETADA').length);
             // contar plagas detectadas en detalles
             const totalPlagas = insp.reduce((s,i)=>s+(i.detalles?.reduce((a,d)=>a+(d.plagas?.length||0),0)||0),0);
@@ -691,9 +692,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply role-based sidebar
     applySidebarRoles();
 
-    // Sidebar toggle
+    // Sidebar toggle (mobile: toggle 'open', desktop: toggle 'collapsed')
     document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-        document.getElementById('sidebar')?.classList.toggle('collapsed');
+        const sidebar = document.getElementById('sidebar');
+        if (window.innerWidth <= 768) {
+            sidebar?.classList.toggle('open');
+        } else {
+            sidebar?.classList.toggle('collapsed');
+            document.querySelector('.app-layout')?.classList.toggle('sidebar-collapsed');
+        }
     });
 
     // User dropdown
