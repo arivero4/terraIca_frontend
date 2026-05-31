@@ -1062,7 +1062,7 @@ class InspeccionesPage extends BasePage {
                     <option value="EN_PROCESO">En Proceso</option>
                     <option value="PENDIENTE_REVISION">Pend. Aprobación ICA</option>
                     <option value="APROBADA">Aprobadas</option>
-                    <option value="COMPLETADA">Aprobada</option>
+                    <option value="COMPLETADA">Completada</option>
                     <option value="CANCELADA">Cancelada</option>
                 </select>
                 ${this.searchBarHTML('Buscar por código ICA, lote...')}
@@ -1460,8 +1460,15 @@ class InspeccionesPage extends BasePage {
     }
 
     async _cancelar(id) {
-        if (!confirm('¿Cancelar esta inspección?')) return;
-        try { await apiInspecciones.patch(Endpoints.INSPECCIONES.CANCELAR(id)); Notify.success('Inspección cancelada'); await this._load(); } catch(e) { this._err(e,'No se pudo cancelar la inspección'); }
+        const motivo = prompt('Motivo de cancelación (opcional):') ?? '';
+        if (motivo === null) return; // usuario presionó Cancelar en el prompt
+        if (!confirm('¿Confirmar cancelación de esta inspección?')) return;
+        try {
+            const params = motivo.trim() ? `?motivo=${encodeURIComponent(motivo.trim())}` : '';
+            await apiInspecciones.patch(Endpoints.INSPECCIONES.CANCELAR(id) + params);
+            Notify.success('Inspección cancelada');
+            await this._load();
+        } catch(e) { this._err(e, 'No se pudo cancelar la inspección'); }
     }
 
     async _openForm(id = null) {
@@ -1472,25 +1479,11 @@ class InspeccionesPage extends BasePage {
         if (id) { try { v = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const isProductor = R.role() === 'PRODUCTOR';
-        const isAdmin = R.role() === 'ADMINISTRADOR';
-
-        // Cargar lista de Asistentes Técnicos para el selector (solo admin)
-        let atUsers = [];
-        if (isAdmin) {
-            try {
-                const allUsers = await apiUsuarios.get('/usuarios');
-                const lst = Array.isArray(allUsers) ? allUsers : (allUsers?.content || allUsers?.data || []);
-                atUsers = lst.filter(u => (u.grupos||[]).some(g => (g.nombre||g) === 'ASISTENTE_TECNICO'));
-            } catch(_) { /* sin AT disponibles */ }
-        }
-        const atOpts = atUsers.map(u =>
-            `<option value="${u.id}|${(u.nombre||'').replace(/['"]/g,'')}|${u.numeroIdentificacion||''}" ${v.nombreInspector === u.nombre ? 'selected' : ''}>${u.nombre} — ${u.correo}</option>`
-        ).join('');
 
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Fecha Programada</label><input class="form-control" id="f-fecha" type="date" value="${v.fechaInspeccion||new Date().toISOString().split('T')[0]}"></div>
-                <div class="form-group"><label>Tipo de Inspección</label>
+                <div class="form-group"><label>Fecha Solicitada</label><input class="form-control" id="f-fecha" type="date" value="${v.fechaInspeccion||new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label>Tipo</label>
                     <select class="form-control" id="f-tipo">
                         <option value="RUTINARIA" ${(v.tipoInspeccion||'RUTINARIA')==='RUTINARIA'?'selected':''}>Rutinaria (control periódico)</option>
                         <option value="EMERGENCIA" ${v.tipoInspeccion==='EMERGENCIA'?'selected':''}>Emergencia (daño urgente)</option>
@@ -1499,52 +1492,25 @@ class InspeccionesPage extends BasePage {
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>Lote a Inspeccionar <span style="color:red">*</span></label>
-                <select class="form-control" id="f-lote"><option value="">— Seleccione el lote del cultivo —</option>${loteOpts}</select>
+            <div class="form-group"><label>Lote a Inspeccionar</label>
+                <select class="form-control" id="f-lote"><option value="">— Seleccione el lote del cultivo hortifrutícola —</option>${loteOpts}</select>
             </div>
-            ${isAdmin ? `
-            <div class="form-group">
-                <label>Asistente Técnico Asignado ${atUsers.length === 0 ? '<span style="color:#e65100;font-size:0.78rem">(ningún AT registrado)</span>' : ''}</label>
-                ${atUsers.length > 0
-                    ? `<select class="form-control" id="f-at-selector">
-                        <option value="">— Asignar AT (opcional por ahora) —</option>
-                        ${atOpts}
-                       </select>
-                       <small style="color:#6b7a8d">El AT podrá iniciar la inspección una vez asignado.</small>`
-                    : `<div style="padding:10px;background:#fff3e0;border-radius:6px;font-size:0.82rem;color:#e65100">
-                        No hay Asistentes Técnicos registrados. Puede registrar inspecciones sin asignar AT por ahora.
-                       </div>`
-                }
-            </div>` : `
-            <div style="padding:10px;background:#e8f5e9;border-radius:8px;margin:8px 0;font-size:0.83rem;color:#2e7d32">
-                El Administrador ICA asignará el Asistente Técnico responsable de esta inspección.
-            </div>`}
+            ${isProductor ? `<div style="padding:10px;background:#e8f5e9;border-radius:8px;margin:8px 0;font-size:0.83rem;color:#2e7d32">
+                ℹ️ El Administrador ICA asignará un Asistente Técnico a esta inspección.
+            </div>` : ''}
             <div class="form-group"><label>${isProductor ? 'Motivo / Problema observado' : 'Observaciones'}</label>
-                <textarea class="form-control" id="f-obs" rows="3" placeholder="${isProductor ? 'Describa el problema observado en el cultivo...' : 'Instrucciones de campo, condiciones especiales...'}">${v.observaciones||''}</textarea>
+                <textarea class="form-control" id="f-obs" rows="3" placeholder="${isProductor ? 'Describa el problema en el cultivo hortifrutícola...' : 'Instrucciones, condiciones del campo...'}">${v.observaciones||''}</textarea>
             </div>`;
 
         const titulo = isProductor ? 'Solicitar Inspección Fitosanitaria' : (id ? 'Editar Inspección' : 'Programar Inspección');
         this.modal.open(titulo, body, async () => {
-            // Resolver AT seleccionado (si aplica)
-            let nombreInspector = 'Pendiente asignación';
-            let cedulaInspector = 'PENDIENTE';
-            if (isAdmin) {
-                const selAT = document.getElementById('f-at-selector')?.value;
-                if (selAT) {
-                    const [, nombre, cedula] = selAT.split('|');
-                    nombreInspector = nombre || 'Pendiente asignación';
-                    cedulaInspector = cedula || 'PENDIENTE';
-                }
-            } else if (isProductor) {
-                nombreInspector = user.nombre || 'Pendiente asignación';
-            }
             const data = {
                 fechaInspeccion: document.getElementById('f-fecha')?.value,
                 tipoInspeccion: document.getElementById('f-tipo')?.value,
                 estado: v.estado || 'PROGRAMADA',
                 idLote: parseInt(document.getElementById('f-lote')?.value),
-                nombreInspector,
-                cedulaInspector,
+                nombreInspector: isProductor ? (user.nombre||'Pendiente asignación') : 'Pendiente asignación',
+                cedulaInspector: isProductor ? 'PENDIENTE' : 'PENDIENTE',
                 observaciones: document.getElementById('f-obs')?.value?.trim()
             };
             if (!data.idLote) { this.modal.setError('Debe seleccionar un lote'); return; }
@@ -1552,7 +1518,7 @@ class InspeccionesPage extends BasePage {
             try {
                 if (id) await apiInspecciones.put(Endpoints.INSPECCIONES.UPDATE(id), data);
                 else await apiInspecciones.post(Endpoints.INSPECCIONES.CREATE, data);
-                Notify.success(isProductor ? 'Solicitud enviada — el Administrador ICA la revisará' : (atUsers.length > 0 && document.getElementById('f-at-selector')?.value ? 'Inspección programada y AT asignado' : 'Inspección programada'));
+                Notify.success(isProductor ? 'Solicitud enviada al Administrador ICA' : 'Inspección programada');
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });

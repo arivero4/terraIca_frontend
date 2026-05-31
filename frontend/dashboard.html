@@ -544,16 +544,21 @@ async function _renderAsistenteDashboard(container) {
             let depInfo    = null;
 
             try {
-                // Paso 1: Buscar detalles para obtener idLote (nuevo esquema)
-                const dets = await apiInspecciones.get(
-                    Endpoints.INSPECCIONES.DETALLES.LIST(id)
-                ).catch(() => []);
-                const detalles = Array.isArray(dets) ? dets : [];
-                const primerDet = detalles[0];
+                // Paso 1: Obtener idLote — primero desde la inspección (nuevo campo),
+                //         luego como fallback desde el primer detalle (para datos antiguos)
+                let loteId = insp.idLote || insp.loteId || null;
 
-                if (primerDet?.idLote) {
+                if (!loteId) {
+                    const dets = await apiInspecciones.get(
+                        Endpoints.INSPECCIONES.DETALLES.LIST(id)
+                    ).catch(() => []);
+                    const detalles = Array.isArray(dets) ? dets : [];
+                    loteId = detalles[0]?.idLote || null;
+                }
+
+                if (loteId) {
                     // Paso 2: Lote → Cultivo + Lugar de Producción
-                    loteInfo = lotes.find(l => l.id === primerDet.idLote) || null;
+                    loteInfo = lotes.find(l => l.id === loteId) || null;
 
                     if (loteInfo?.idLugar) {
                         // Paso 3: Lugar de Producción
