@@ -138,6 +138,30 @@ class BasePage {
         </td></tr>`;
     }
 
+    /**
+     * Genera una celda <td> con menú desplegable de acciones.
+     * @param {string} uid  - Identificador único para el menú (ej: `u-${id}`)
+     * @param {string} btns - HTML interno con los <button class="btn-icon ...">
+     * @param {string} [emptyCell='<td></td>'] - Celda vacía si no hay acciones
+     */
+    actionsCell(uid, btns, emptyCell = '<td></td>') {
+        if (!btns || !btns.trim()) return emptyCell;
+        const menuId = `dd-${uid}`;
+        return `<td class="actions-cell">
+            <div class="actions-menu-wrap" style="position:relative;display:inline-block">
+                <button class="btn-actions-toggle"
+                    onclick="event.stopPropagation();document.querySelectorAll('.actions-dropdown.open').forEach(d=>{if(d.id!=='${menuId}')d.classList.remove('open')});document.getElementById('${menuId}').classList.toggle('open')"
+                    style="background:#f0f2f5;border:1px solid #dde1e7;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:0.8rem;font-weight:600;color:#1a2332;white-space:nowrap;line-height:1.4">
+                    Acciones ▾
+                </button>
+                <div id="${menuId}" class="actions-dropdown"
+                    style="position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #dde1e7;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:999;min-width:160px;padding:4px 0;display:none">
+                    ${btns}
+                </div>
+            </div>
+        </td>`;
+    }
+
     bindSearch(dataFn, renderFn) {
         const input = document.getElementById('search-input');
         if (!input) return;
@@ -162,6 +186,7 @@ class BasePage {
             COMPLETADA:       ['badge--success', 'Completada'],
             CANCELADA:        ['badge--danger',  'Cancelada'],
             PENDIENTE_REVISION: ['badge--warning','Pend. Aprobación'],
+            APROBADA:           ['badge--success','Aprobada'],
             // Compatibilidad con nombres alternativos
             PENDIENTE:        ['badge--warning', 'Pendiente'],
             EN_PROGRESO:      ['badge--info',    'En Progreso'],
@@ -234,10 +259,10 @@ class UsuariosPage extends BasePage {
                 <td><span class="text-muted">${u.correo || u.email || '—'}</span></td>
                 <td><span class="chip">${u.grupos?.[0]?.nombre || u.grupo?.nombre || u.grupoNombre || '—'}</span></td>
                 <td>${this.badgeEstado(u.estado)}</td>
-                <td class="actions-cell">
-                    <button class="btn-icon btn-icon--edit" title="Editar" onclick="usuariosPage._openForm(${u.id})">Editar</button>
-                    <button class="btn-icon btn-icon--toggle" title="Cambiar estado" onclick="usuariosPage._toggleEstado(${u.id},'${u.estado}')">Cambiar</button>
-                </td>
+                ${this.actionsCell(`us-${u.id}`, `
+                    <button class="btn-icon btn-icon--edit" onclick="usuariosPage._openForm(${u.id})">Editar</button>
+                    <button class="btn-icon btn-icon--toggle" onclick="usuariosPage._toggleEstado(${u.id},'${u.estado}')">Cambiar estado</button>
+                `)}
             </tr>`).join('');
     }
 
@@ -339,10 +364,10 @@ class DepartamentosPage extends BasePage {
                 <td><code>${d.codigoDane || d.codigo || d.codigoDepartamento || '—'}</code></td>
                 <td><strong>${d.nombre}</strong></td>
                 <td>${this.badgeEstado(d.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`dep-${d.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="departamentosPage._openForm(${d.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="departamentosPage._delete(${d.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`).join('');
     }
 
@@ -419,10 +444,10 @@ class MunicipiosPage extends BasePage {
                 <td><strong>${m.nombre}</strong></td>
                 <td>${m.departamentoNombre||m.departamento?.nombre||'—'}</td>
                 <td>${this.badgeEstado(m.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`mun-${m.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="municipiosPage._openForm(${m.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="municipiosPage._delete(${m.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`).join('');
     }
 
@@ -499,10 +524,10 @@ class LugaresPage extends BasePage {
                 <td><strong>${l.nombre}</strong></td>
                 <td>${l.area || '—'} ha</td>
                 <td>${this.badgeEstado(l.activo !== false ? 'ACTIVO' : 'INACTIVO')}</td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`lug-${l.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="lugaresPage._openForm(${l.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="lugaresPage._delete(${l.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`).join('');
     }
 
@@ -594,10 +619,10 @@ class PrediosPage extends BasePage {
                 <td class="text-muted">${p.vereda||'—'}</td>
                 <td>${p.area||p.areaHectareas||'—'} ha</td>
                 <td>${p.lugarProduccionNombre||p.lugarProduccion?.nombre||p.lugarNombre||'—'}</td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`pred-${p.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="prediosPage._openForm(${p.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="prediosPage._delete(${p.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`).join('');
     }
 
@@ -704,10 +729,10 @@ class CultivosPage extends BasePage {
                 <td class="text-muted">${c.nombreVariedad || '—'}</td>
                 <td><em class="text-muted">${c.nombreCientifico || '—'}</em></td>
                 <td class="text-muted">${desc}</td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`cul-${c.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="cultivosPage._openForm(${c.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="cultivosPage._delete(${c.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`;
         }).join('');
     }
@@ -827,10 +852,10 @@ class LotesPage extends BasePage {
         const canW = R.canWrite('lotes');
         tbody.innerHTML = data.map((l,i) => {
             const estado = l.estado || 'ACTIVO';
-            const acciones = canW ? `
+            const accionesBtns = canW ? `
                 <button class="btn-icon btn-icon--edit" onclick="lotesPage._openForm(${l.id})">Editar</button>
-                ${estado === 'ACTIVO' ? `<button class="btn-icon btn-icon--success" title="Iniciar producción" onclick="lotesPage._iniciar(${l.id})">Iniciar</button>` : ''}
-                ${estado === 'EN_PRODUCCION' ? `<button class="btn-icon btn-icon--warning" title="Registrar cosecha" onclick="lotesPage._cosechar(${l.id})">Cosechar</button>` : ''}
+                ${estado === 'ACTIVO' ? `<button class="btn-icon btn-icon--success" onclick="lotesPage._iniciar(${l.id})">Iniciar producción</button>` : ''}
+                ${estado === 'EN_PRODUCCION' ? `<button class="btn-icon btn-icon--warning" onclick="lotesPage._cosechar(${l.id})">Registrar cosecha</button>` : ''}
                 <button class="btn-icon btn-icon--delete" onclick="lotesPage._delete(${l.id})">Eliminar</button>` : '';
             // Buscar lugar en cache
             const lugar = this._lugares ? this._lugares.find(lg => lg.id === l.idLugar) : null;
@@ -843,7 +868,7 @@ class LotesPage extends BasePage {
                 </td>
                 <td>${l.area||l.areaHectareas||'—'} ha</td>
                 <td>${this.badgeEstado(estado)}</td>
-                <td class="actions-cell">${acciones}</td>
+                ${this.actionsCell(`lot-${l.id}`, accionesBtns)}
             </tr>`;
         }).join('');
     }
@@ -960,10 +985,10 @@ class PlagasPage extends BasePage {
                 <td><strong>${p.nombreComun||p.nombre||'—'}</strong></td>
                 <td><em class="text-muted">${p.nombreCientifico||'—'}</em></td>
                 <td><span class="chip">${cultivoLabel}</span></td>
-                ${canW ? `<td class="actions-cell">
+                ${canW ? this.actionsCell(`plg-${p.id}`, `
                     <button class="btn-icon btn-icon--edit" onclick="plagasPage._openForm(${p.id})">Editar</button>
                     <button class="btn-icon btn-icon--delete" onclick="plagasPage._delete(${p.id})">Eliminar</button>
-                </td>` : '<td></td>'}
+                `) : '<td></td>'}
             </tr>`;
         }).join('');
     }
@@ -1036,6 +1061,7 @@ class InspeccionesPage extends BasePage {
                     <option value="PROGRAMADA">Programada</option>
                     <option value="EN_PROCESO">En Proceso</option>
                     <option value="PENDIENTE_REVISION">Pend. Aprobación ICA</option>
+                    <option value="APROBADA">Aprobadas</option>
                     <option value="COMPLETADA">Aprobada</option>
                     <option value="CANCELADA">Cancelada</option>
                 </select>
@@ -1209,6 +1235,23 @@ class InspeccionesPage extends BasePage {
             const ep = estado ? Endpoints.INSPECCIONES.BY_ESTADO(estado) : Endpoints.INSPECCIONES.LIST;
             const res = await apiInspecciones.get(ep);
             this._data = Array.isArray(res) ? res : (res?.data ?? res?.content ?? []);
+
+            // Resolver idLote desde detalles (nuevo esquema: idLote está en DETALLE_INSPECCION)
+            // Solo para inspecciones sin idLote directo
+            const sinLote = this._data.filter(i => !i.idLote && !i.loteId);
+            if (sinLote.length > 0) {
+                await Promise.all(sinLote.map(async insp => {
+                    try {
+                        const dets = await apiInspecciones.get(
+                            Endpoints.INSPECCIONES.DETALLES.LIST(insp.idInspeccion || insp.id)
+                        ).catch(() => []);
+                        const lst = Array.isArray(dets) ? dets : [];
+                        const loteIdFromDet = lst.find(d => d.idLote)?.idLote || null;
+                        if (loteIdFromDet) insp._loteId = loteIdFromDet;
+                    } catch(_) {}
+                }));
+            }
+
             this._renderStats();
             if (R.isAT()) {
                 this._renderAgendaCards(this._data);
@@ -1232,7 +1275,7 @@ class InspeccionesPage extends BasePage {
             <div class="stat-mini stat-mini--warning"><span class="stat-mini__val">${counts.PROGRAMADA||0}</span><span class="stat-mini__lbl">Programadas</span></div>
             <div class="stat-mini stat-mini--info"><span class="stat-mini__val">${counts.EN_PROCESO||0}</span><span class="stat-mini__lbl">En Proceso</span></div>
             <div class="stat-mini stat-mini--danger"><span class="stat-mini__val">${counts.PENDIENTE_REVISION||0}</span><span class="stat-mini__lbl">Pend. Revisión</span></div>
-            <div class="stat-mini stat-mini--success"><span class="stat-mini__val">${counts.COMPLETADA||0}</span><span class="stat-mini__lbl">Aprobadas</span></div>`;
+            <div class="stat-mini stat-mini--success"><span class="stat-mini__val">${counts.APROBADA||0}</span><span class="stat-mini__lbl">Aprobadas</span></div>`;
     }
 
     _render(data) {
@@ -1260,25 +1303,32 @@ class InspeccionesPage extends BasePage {
                 ${(isAdmin || isAT) && estado === 'PROGRAMADA' ? `<button class="btn-icon btn-icon--success" title="Iniciar — el Asistente comienza la inspección" onclick="inspeccionesPage._iniciar(${inspId})">Iniciar</button>` : ''}
                 ${(isAdmin || isAT) && estado === 'EN_PROCESO' ? `<button class="btn-icon btn-icon--primary" title="Completar trabajo de campo" onclick="inspeccionesPage._completarCampo(${inspId})">Completar</button>` : ''}
                 ${(isAdmin || isAT) && estado === 'COMPLETADA' ? `<button class="btn-icon btn-icon--warning" title="Enviar a revisión del Administrador ICA" onclick="inspeccionesPage._enviarRevision(${inspId})" style="background:#fff8e1;color:#e65100">Enviar</button>` : ''}
-                ${isAdmin && estado === 'PENDIENTE_REVISION' ? `<button class="btn-icon btn-icon--info" title="Generar informe oficial" onclick="inspeccionesPage._generarInforme(${inspId})" style="background:#e3f2fd;color:#1565c0">Informe</button>` : ''}
-                ${isAdmin && estado === 'PENDIENTE_REVISION' ? `<button class="btn-icon btn-icon--delete" title="Devolver para corrección" onclick="inspeccionesPage._devolver(${inspId})">Devolver</button>` : ''}
+                ${isAdmin && estado === 'PENDIENTE_REVISION' ? `<button class="btn-icon btn-icon--success" title="Aprobar inspección" onclick="inspeccionesPage._aprobarInspeccion(${inspId})" style="background:#e8f5e9;color:#2e7d32;font-weight:700">Aprobar</button>` : ''}
+                ${isAdmin && estado === 'PENDIENTE_REVISION' ? `<button class="btn-icon btn-icon--warning" title="Devolver al AT para corrección" onclick="inspeccionesPage._devolver(${inspId})" style="background:#fff8e1;color:#e65100">Devolver</button>` : ''}
+                ${isAdmin && (estado === 'APROBADA') ? `<button class="btn-icon btn-icon--info" title="Generar informe oficial" onclick="inspeccionesPage._generarInforme(${inspId})" style="background:#e3f2fd;color:#1565c0">Informe</button>` : ''}
                 ${(isAdmin || (isProd && estado === 'PROGRAMADA')) ? `<button class="btn-icon btn-icon--delete" title="Cancelar" onclick="inspeccionesPage._cancelar(${inspId})" ${(estado==='PENDIENTE_REVISION'||estado==='COMPLETADA')&&!isAdmin?'style="display:none"':''}>Cancelar</button>` : ''}`;
 
             // Resaltar fila si está pendiente de aprobación
-            const rowClass = estado === 'PENDIENTE_REVISION' ? 'style="background:#fff8e1"' : '';
+            const rowClass = estado === 'PENDIENTE_REVISION' ? 'style="background:#fff8e1"'
+                          : estado === 'APROBADA'            ? 'style="background:#f1f8e9"' : '';
 
-            // Buscar info del lote
-            const _lid = insp.idLote || insp.loteId;
+            // Buscar info del lote (nuevo esquema: idLote puede venir de _loteId resuelto desde detalles)
+            const _lid = insp.idLote || insp.loteId || insp._loteId;
             const loteInfo = _lid ? this._lotes.find(l => l.id === _lid) : null;
-            const loteLabel = loteInfo
-                ? `${loteInfo.nombre||'Lote #'+loteInfo.id} <small class="text-muted">— ${loteInfo.cultivoNombre||'Cultivo'}</small>`
-                : `<span class="text-muted" style="font-size:0.82rem">${insp.tipo||insp.tipoInspeccion||'Rutinaria'}</span>`;
+            const loteNombre = loteInfo
+                ? `<strong>${loteInfo.nombre || 'Lote #'+loteInfo.id}</strong>`
+                : `<span style="color:#aab4be">Sin lote asignado</span>`;
+            const cultivoNombre = loteInfo?.cultivoNombre
+                ? `<small class="text-muted">${loteInfo.cultivoNombre}</small>`
+                : '';
+            const tipoChip = `<span class="chip chip--xs" style="margin-top:2px">${insp.tipoInspeccion||insp.tipo||'Rutinaria'}</span>`;
+
             return `<tr ${rowClass}>
                 <td><span class="row-num">${i+1}</span></td>
-                <td>${fecha}<br><small class="text-muted">${insp.numeroInspeccion||insp.codigoIca||''}</small></td>
-                <td>${loteLabel}<br><span class="chip chip--xs">${insp.tipo||insp.tipoInspeccion||'Rutinaria'}</span></td>
+                <td style="white-space:nowrap">${fecha}<br><code style="font-size:0.7rem;color:#6b7a8d">${insp.numeroInspeccion||insp.codigoIca||'—'}</code></td>
+                <td>${loteNombre}${cultivoNombre ? '<br>'+cultivoNombre : ''}<br>${tipoChip}</td>
                 <td>${this.badgeEstado(estado)}</td>
-                <td class="actions-cell">${acciones}</td>
+                ${this.actionsCell(`insp-${inspId}`, acciones)}
             </tr>`;
         }).join('');
     }
@@ -1314,18 +1364,94 @@ class InspeccionesPage extends BasePage {
 
     // Devolver para corrección (Admin devuelve al Asistente → EN_PROCESO)
     async _devolver(id) {
-        if (!confirm('¿Devolver esta inspección al Asistente Técnico para corrección?\nEl Asistente deberá completar la información faltante.')) return;
+        if (!confirm('¿Devolver esta inspección al Asistente Técnico para corrección?\nEl estado volverá a EN_PROCESO y el AT podrá añadir más datos.')) return;
         try {
-            await apiInspecciones.patch(Endpoints.INSPECCIONES.INICIAR(id));
+            await apiInspecciones.patch(Endpoints.INSPECCIONES.DEVOLVER(id));
             Notify.warning('Inspección devuelta al Asistente Técnico para corrección');
             await this._load();
         } catch(e) { this._err(e,'No se pudo devolver la inspección'); }
     }
 
-    // Generar Informe (Admin ICA, inspección PENDIENTE_REVISION)
-    async _generarInforme(id) {
-        Notify.info('Generando informe oficial de inspección fitosanitaria...');
-        setTimeout(() => loadPage('reportes'), 1200);
+    // Aprobar inspección (Admin ICA: PENDIENTE_REVISION → APROBADA)
+    async _aprobarInspeccion(id) {
+        // Cargar datos de la inspección para mostrar resumen
+        let insp, detalles = [];
+        try {
+            [insp, detalles] = await Promise.all([
+                apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)),
+                apiInspecciones.get(Endpoints.INSPECCIONES.DETALLES.LIST(id)).catch(() => [])
+            ]);
+        } catch(e) { this._err(e,'No se pudo cargar la inspección'); return; }
+
+        const det = Array.isArray(detalles) ? detalles : [];
+        const totalPlantas = det.reduce((s, d) => s + (d.totalPlantas || 0), 0);
+        const loteInfo = (this._lotes||[]).find(l => l.id === (insp.idLote || insp.loteId));
+
+        // Cargar plagas de cada detalle en paralelo
+        const plagasPorDet = await Promise.all(
+            det.map(d => apiInspecciones.get(Endpoints.INSPECCIONES.DETALLES.PLAGAS.LIST(d.idDetalle)).catch(() => []))
+        );
+        const todasPlagas = plagasPorDet.flat();
+        const totalAfect = todasPlagas.reduce((s, p) => s + (p.plantasAfectadas || 0), 0);
+        const pctIncid = totalPlantas > 0 ? ((totalAfect / totalPlantas) * 100).toFixed(1) : '0.0';
+        const nivelIncid = parseFloat(pctIncid) >= 20 ? 'ALTA' : parseFloat(pctIncid) >= 10 ? 'MEDIA' : 'BAJA';
+        const colorIncid = parseFloat(pctIncid) >= 20 ? '#ef5350' : parseFloat(pctIncid) >= 10 ? '#ffa726' : '#66bb6a';
+
+        const plagasResumen = todasPlagas.length === 0
+            ? `<p style="color:#888;font-size:0.83rem">Sin plagas registradas</p>`
+            : todasPlagas.map(p => {
+                const inc = totalPlantas > 0 ? ((p.plantasAfectadas / totalPlantas) * 100).toFixed(1) : '0.0';
+                const col = parseFloat(inc) >= 20 ? '#ef5350' : parseFloat(inc) >= 10 ? '#ffa726' : '#66bb6a';
+                return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:0.82rem">
+                    <span>${p.nombrePlaga || 'Plaga #'+p.idPlaga}</span>
+                    <span style="color:${col};font-weight:700">${inc}% (${p.plantasAfectadas} plantas)</span>
+                </div>`;
+            }).join('');
+
+        const bodyHtml = `
+            <div style="background:#f8fffe;border:1px solid #c8e6c9;border-radius:8px;padding:14px;margin-bottom:14px">
+                <div style="font-size:0.78rem;color:#388e3c;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Resumen de la Inspección</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.83rem">
+                    <div><strong>Lote:</strong> ${loteInfo ? (loteInfo.nombre + ' — ' + (loteInfo.cultivoNombre||'Cultivo')) : ('Lote #'+(insp.idLote||'—'))}</div>
+                    <div><strong>AT responsable:</strong> ${insp.nombreInspector || '—'}</div>
+                    <div><strong>Muestreos realizados:</strong> ${det.length}</div>
+                    <div><strong>Total plantas:</strong> ${totalPlantas}</div>
+                    <div><strong>Incidencia general:</strong> <span style="color:${colorIncid};font-weight:700">${pctIncid}% — ${nivelIncid}</span></div>
+                    <div><strong>Plagas detectadas:</strong> ${todasPlagas.length}</div>
+                </div>
+            </div>
+            ${todasPlagas.length > 0 ? `<div style="margin-bottom:10px"><div style="font-size:0.75rem;font-weight:700;color:#6b7a8d;text-transform:uppercase;margin-bottom:4px">Plagas Registradas</div>${plagasResumen}</div>` : ''}
+            <div class="form-group" style="margin-top:10px">
+                <label style="font-weight:600">Observaciones de aprobación <span style="color:#888;font-weight:400">(opcional)</span></label>
+                <textarea class="form-control" id="f-obs-aprobacion" rows="2" placeholder="Conforme con los resultados del muestreo fitosanitario..."></textarea>
+            </div>
+            <div style="background:#fff3e0;border-radius:6px;padding:10px;font-size:0.8rem;color:#e65100;margin-top:8px">
+                Al aprobar, la inspección queda registrada como <strong>APROBADA</strong> y no podrá modificarse.
+            </div>`;
+
+        this.modal.open('Aprobar Inspección Fitosanitaria', bodyHtml, async () => {
+            try {
+                await apiInspecciones.patch(Endpoints.INSPECCIONES.APROBAR(id));
+                Notify.success('Inspección aprobada oficialmente por el Administrador ICA');
+                this.modal.close();
+                await this._load();
+            } catch(e) { this.modal.setError(e.message || 'Error al aprobar la inspección'); }
+        });
+        // Personalizar botón de confirmación
+        setTimeout(() => {
+            const btn = document.querySelector('#modal-generic .btn-save');
+            if (btn) { btn.textContent = 'Aprobar Oficialmente'; btn.style.cssText += ';background:#2e7d32 !important;border-color:#2e7d32 !important'; }
+        }, 30);
+    }
+
+    // Generar Informe (Admin ICA, inspección APROBADA) — genera el informe directamente
+    async _generarInforme(inspId) {
+        Notify.info('Cargando informe de inspección...');
+        // Navegar a reportes y auto-generar el informe de esa inspección
+        await loadPage('reportes');
+        setTimeout(() => {
+            if (window.reportesPage) reportesPage._generarParaInspeccion(inspId);
+        }, 400);
     }
 
     async _completar(id) {
@@ -1346,10 +1472,25 @@ class InspeccionesPage extends BasePage {
         if (id) { try { v = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(id)); } catch(e) { this._err(e,'Error al cargar datos'); } }
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const isProductor = R.role() === 'PRODUCTOR';
+        const isAdmin = R.role() === 'ADMINISTRADOR';
+
+        // Cargar lista de Asistentes Técnicos para el selector (solo admin)
+        let atUsers = [];
+        if (isAdmin) {
+            try {
+                const allUsers = await apiUsuarios.get('/usuarios');
+                const lst = Array.isArray(allUsers) ? allUsers : (allUsers?.content || allUsers?.data || []);
+                atUsers = lst.filter(u => (u.grupos||[]).some(g => (g.nombre||g) === 'ASISTENTE_TECNICO'));
+            } catch(_) { /* sin AT disponibles */ }
+        }
+        const atOpts = atUsers.map(u =>
+            `<option value="${u.id}|${(u.nombre||'').replace(/['"]/g,'')}|${u.numeroIdentificacion||''}" ${v.nombreInspector === u.nombre ? 'selected' : ''}>${u.nombre} — ${u.correo}</option>`
+        ).join('');
+
         const body = `
             <div class="form-row">
-                <div class="form-group"><label>Fecha Solicitada</label><input class="form-control" id="f-fecha" type="date" value="${v.fechaInspeccion||new Date().toISOString().split('T')[0]}"></div>
-                <div class="form-group"><label>Tipo</label>
+                <div class="form-group"><label>Fecha Programada</label><input class="form-control" id="f-fecha" type="date" value="${v.fechaInspeccion||new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label>Tipo de Inspección</label>
                     <select class="form-control" id="f-tipo">
                         <option value="RUTINARIA" ${(v.tipoInspeccion||'RUTINARIA')==='RUTINARIA'?'selected':''}>Rutinaria (control periódico)</option>
                         <option value="EMERGENCIA" ${v.tipoInspeccion==='EMERGENCIA'?'selected':''}>Emergencia (daño urgente)</option>
@@ -1358,28 +1499,52 @@ class InspeccionesPage extends BasePage {
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>Lote a Inspeccionar</label>
-                <select class="form-control" id="f-lote"><option value="">— Seleccione el lote del cultivo hortifrutícola —</option>${loteOpts}</select>
+            <div class="form-group"><label>Lote a Inspeccionar <span style="color:red">*</span></label>
+                <select class="form-control" id="f-lote"><option value="">— Seleccione el lote del cultivo —</option>${loteOpts}</select>
             </div>
-            ${!isProductor ? `
-            <div class="form-row">
-                <div class="form-group"><label>Nombre Inspector</label><input class="form-control" id="f-inspector" value="${v.nombreInspector||user.nombre||''}" placeholder="Asistente Técnico"></div>
-                <div class="form-group"><label>Cédula</label><input class="form-control" id="f-cedula" value="${v.cedulaInspector||''}" placeholder="Número de identificación"></div>
-            </div>` : `<div style="padding:10px;background:#e8f5e9;border-radius:8px;margin:8px 0;font-size:0.83rem;color:#2e7d32">
-                ℹ️ El Administrador ICA asignará un Asistente Técnico a esta inspección.
+            ${isAdmin ? `
+            <div class="form-group">
+                <label>Asistente Técnico Asignado ${atUsers.length === 0 ? '<span style="color:#e65100;font-size:0.78rem">(ningún AT registrado)</span>' : ''}</label>
+                ${atUsers.length > 0
+                    ? `<select class="form-control" id="f-at-selector">
+                        <option value="">— Asignar AT (opcional por ahora) —</option>
+                        ${atOpts}
+                       </select>
+                       <small style="color:#6b7a8d">El AT podrá iniciar la inspección una vez asignado.</small>`
+                    : `<div style="padding:10px;background:#fff3e0;border-radius:6px;font-size:0.82rem;color:#e65100">
+                        No hay Asistentes Técnicos registrados. Puede registrar inspecciones sin asignar AT por ahora.
+                       </div>`
+                }
+            </div>` : `
+            <div style="padding:10px;background:#e8f5e9;border-radius:8px;margin:8px 0;font-size:0.83rem;color:#2e7d32">
+                El Administrador ICA asignará el Asistente Técnico responsable de esta inspección.
             </div>`}
             <div class="form-group"><label>${isProductor ? 'Motivo / Problema observado' : 'Observaciones'}</label>
-                <textarea class="form-control" id="f-obs" rows="3" placeholder="${isProductor ? 'Describa el problema en el cultivo hortifrutícola...' : 'Instrucciones, condiciones del campo...'}">${v.observaciones||''}</textarea>
+                <textarea class="form-control" id="f-obs" rows="3" placeholder="${isProductor ? 'Describa el problema observado en el cultivo...' : 'Instrucciones de campo, condiciones especiales...'}">${v.observaciones||''}</textarea>
             </div>`;
+
         const titulo = isProductor ? 'Solicitar Inspección Fitosanitaria' : (id ? 'Editar Inspección' : 'Programar Inspección');
         this.modal.open(titulo, body, async () => {
+            // Resolver AT seleccionado (si aplica)
+            let nombreInspector = 'Pendiente asignación';
+            let cedulaInspector = 'PENDIENTE';
+            if (isAdmin) {
+                const selAT = document.getElementById('f-at-selector')?.value;
+                if (selAT) {
+                    const [, nombre, cedula] = selAT.split('|');
+                    nombreInspector = nombre || 'Pendiente asignación';
+                    cedulaInspector = cedula || 'PENDIENTE';
+                }
+            } else if (isProductor) {
+                nombreInspector = user.nombre || 'Pendiente asignación';
+            }
             const data = {
                 fechaInspeccion: document.getElementById('f-fecha')?.value,
                 tipoInspeccion: document.getElementById('f-tipo')?.value,
                 estado: v.estado || 'PROGRAMADA',
                 idLote: parseInt(document.getElementById('f-lote')?.value),
-                nombreInspector: isProductor ? (user.nombre||'Pendiente asignación') : document.getElementById('f-inspector')?.value?.trim(),
-                cedulaInspector: isProductor ? 'PENDIENTE' : document.getElementById('f-cedula')?.value?.trim(),
+                nombreInspector,
+                cedulaInspector,
                 observaciones: document.getElementById('f-obs')?.value?.trim()
             };
             if (!data.idLote) { this.modal.setError('Debe seleccionar un lote'); return; }
@@ -1387,7 +1552,7 @@ class InspeccionesPage extends BasePage {
             try {
                 if (id) await apiInspecciones.put(Endpoints.INSPECCIONES.UPDATE(id), data);
                 else await apiInspecciones.post(Endpoints.INSPECCIONES.CREATE, data);
-                Notify.success(isProductor ? 'Solicitud enviada al Administrador ICA' : 'Inspección programada');
+                Notify.success(isProductor ? 'Solicitud enviada — el Administrador ICA la revisará' : (atUsers.length > 0 && document.getElementById('f-at-selector')?.value ? 'Inspección programada y AT asignado' : 'Inspección programada'));
                 this.modal.close(); await this._load();
             } catch(e) { this.modal.setError(e.message); }
         });
@@ -1425,6 +1590,21 @@ class InspeccionDetallePage extends BasePage {
             this._lotesDisponibles = lotes; // Guardar todos los lotes para el selector
             // Encontrar info del lote si la inspección lo tiene
             this._loteInfo = lotes.find(l => l.id === (insp.idLote || insp.loteId)) || null;
+
+            // Cargar plagas de cada detalle guardado (en paralelo)
+            if (this._detalles.length > 0) {
+                const plagasPorDetalle = await Promise.all(
+                    this._detalles.map(det =>
+                        apiInspecciones.get(
+                            Endpoints.INSPECCIONES.DETALLES.PLAGAS.LIST(det.idDetalle || det.id)
+                        ).catch(() => [])
+                    )
+                );
+                this._detalles.forEach((det, i) => {
+                    det._plagas = Array.isArray(plagasPorDetalle[i]) ? plagasPorDetalle[i] : [];
+                });
+            }
+
             this._renderDetalle(container, inspeccionId);
         } catch(e) {
             container.innerHTML = `<div class="error-state"><h3>Error al cargar inspección</h3><p>${e.message}</p><button class="btn btn-secondary" onclick="loadPage('inspecciones')">← Volver</button></div>`;
@@ -1692,29 +1872,68 @@ class InspeccionDetallePage extends BasePage {
         if (!this._detalles.length) return '';
         return this._detalles.map((det, i) => {
             const total = det.totalPlantas || det.plantasMuestreadas || 0;
-            const afect = det.plantasAfectadas || 0;
+            // Calcular afectadas sumando las plagas del detalle (dato real de DETALLE_PLAGA)
+            const plagasDet = det._plagas || [];
+            const afect = plagasDet.reduce((s, p) => s + (p.plantasAfectadas || 0), 0);
             const pct   = total > 0 ? ((afect / total) * 100).toFixed(1) : '0.0';
             const pctN  = parseFloat(pct);
             const color = pctN >= 20 ? '#ef5350' : pctN >= 10 ? '#ffa726' : '#66bb6a';
             const nivel = pctN >= 20 ? 'ALTA' : pctN >= 10 ? 'MEDIA' : 'BAJA';
+
+            // HTML para la lista de plagas detectadas en este muestreo
+            const plagasHtml = plagasDet.length === 0
+                ? `<p style="font-size:0.78rem;color:#aab;margin:6px 0 0">Sin plagas registradas en este muestreo</p>`
+                : `<div style="margin-top:10px">
+                    <div style="font-size:0.75rem;font-weight:700;color:#6b7a8d;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">Plagas detectadas (${plagasDet.length})</div>
+                    ${plagasDet.map(p => {
+                        // Cruzar con catálogo para obtener nombreCientifico e imagen
+                        const cat = this._plagasCatalogo.find(c => c.id === (p.idPlaga || p.plagaId));
+                        const nombreCientifico = p.nombreCientifico || cat?.nombreCientifico || null;
+                        const tipo = cat?.tipo || null;
+                        const cachedImg = nombreCientifico ? PlagaImages._cache[nombreCientifico] : null;
+                        const imgHtml = cachedImg
+                            ? `<img src="${cachedImg}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">`
+                            : `<span style="font-size:1.1rem;width:32px;text-align:center;flex-shrink:0">${PlagaImages._fallbackIcons?.[tipo?.toUpperCase()] || '🐛'}</span>`;
+                        const incPct = total > 0 ? ((p.plantasAfectadas / total) * 100).toFixed(1) : (p.nivelIncidencia ? p.nivelIncidencia.toFixed(1) : '0.0');
+                        const incN   = parseFloat(incPct);
+                        const incCol = incN >= 20 ? '#ef5350' : incN >= 10 ? '#ffa726' : '#66bb6a';
+                        const pNombre = p.nombrePlaga || cat?.nombreComun || cat?.nombre || ('Plaga #' + (p.idPlaga || '?'));
+                        const nivelSev = p.nivelSeveridad || (incN >= 20 ? 'ALTO' : incN >= 10 ? 'MEDIO' : 'BAJO');
+                        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f2f5">
+                            ${imgHtml}
+                            <div style="flex:1;min-width:0">
+                                <div style="font-weight:600;font-size:0.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${pNombre}</div>
+                                ${nombreCientifico ? `<div style="font-size:0.7rem;color:#8a94a6;font-style:italic">${nombreCientifico}</div>` : ''}
+                            </div>
+                            <div style="text-align:right;flex-shrink:0">
+                                <div style="font-size:0.95rem;font-weight:700;color:${incCol}">${incPct}%</div>
+                                <div style="font-size:0.68rem;color:${incCol};font-weight:600">${nivelSev}</div>
+                                <div style="font-size:0.68rem;color:#8a94a6">${p.plantasAfectadas} plantas</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+
+            const cultivoLabel = (() => {
+                if (det.nombreCultivo) return det.nombreCultivo;
+                if (det.idLote) {
+                    const lx = (this._lotesDisponibles||[]).find(x => x.id === det.idLote);
+                    return lx ? (lx.nombre + ' — ' + (lx.cultivoNombre||'Cultivo')) : 'Lote #' + det.idLote;
+                }
+                return 'Muestreo de campo';
+            })();
+
             return `
             <div class="resultado-tecnico-card">
                 <div class="resultado-tecnico-header">
                     <div>
                         <span class="chip chip--xs">Muestreo #${i + 1}</span>
-                        <strong style="display:block;margin-top:4px">${(() => {
-                            if (det.nombreCultivo) return det.nombreCultivo;
-                            if (det.idLote) {
-                                const lx = (this._lotesDisponibles||[]).find(x => x.id === det.idLote);
-                                return lx ? (lx.nombre + ' — ' + (lx.cultivoNombre||'Cultivo')) : 'Lote #' + det.idLote;
-                            }
-                            return 'Muestreo de campo';
-                        })()}</strong>
+                        <strong style="display:block;margin-top:4px">${cultivoLabel}</strong>
                         <span style="font-size:0.78rem;color:#6b7a8d">${total} plantas inspeccionadas</span>
                     </div>
                     <div style="text-align:right">
                         <div style="font-size:1.8rem;font-weight:800;color:${color};line-height:1">${pct}%</div>
-                        <div style="font-size:0.72rem;font-weight:600;color:${color}">${nivel}</div>
+                        <div style="font-size:0.72rem;font-weight:600;color:${color}">Incidencia ${nivel}</div>
                     </div>
                 </div>
                 <div class="resultado-barra-wrap">
@@ -1723,7 +1942,9 @@ class InspeccionDetallePage extends BasePage {
                 <div style="font-size:0.78rem;color:#6b7a8d;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
                     <span><strong>${afect}</strong> plantas afectadas</span>
                     <span>Incidencia: <strong style="color:${color}">${pct}%</strong></span>
+                    <span>${plagasDet.length} plaga${plagasDet.length !== 1 ? 's' : ''} detectada${plagasDet.length !== 1 ? 's' : ''}</span>
                 </div>
+                ${plagasHtml}
             </div>`;
         }).join('');
     }
@@ -1859,7 +2080,7 @@ class InspeccionDetallePage extends BasePage {
                     await apiInspecciones.post(
                         Endpoints.INSPECCIONES.DETALLES.PLAGAS.CREATE(detId),
                         { plagaId: p.id, nombrePlaga: p.nombre, plantasAfectadas: p.afectadas, incidencia }
-                    ).catch(()=>{}); // continuar aunque falle una plaga
+                    ).catch(err => console.error(`Error guardando plaga ${p.nombre}:`, err));
                 }
             }
 
@@ -1884,7 +2105,7 @@ class InspeccionDetallePage extends BasePage {
 // ─── REPORTES PAGE ────────────────────────────────────────────────────────────
 
 class ReportesPage extends BasePage {
-    constructor() { super('reportes'); this._data = []; }
+    constructor() { super('reportes'); this._data = []; this._loteCache = []; this._plagaCache = []; }
 
     async render(container) {
         container.innerHTML = `
@@ -1899,6 +2120,8 @@ class ReportesPage extends BasePage {
                             <option value="">Todos</option>
                             <option value="COMPLETADA">Completadas</option>
                             <option value="PROGRAMADA">Programadas</option>
+                            <option value="APROBADA">Aprobadas</option>
+                            <option value="COMPLETADA">Completadas</option>
                             <option value="EN_PROCESO">En Proceso</option>
                             <option value="CANCELADA">Canceladas</option>
                         </select>
@@ -1923,6 +2146,32 @@ class ReportesPage extends BasePage {
         if (ff) ff.value = hoy.toISOString().split('T')[0];
     }
 
+    // Cargar datos base (lotes, plagas del catálogo)
+    async _loadBase() {
+        if (!this._loteCache.length || !this._plagaCache.length) {
+            const [lotes, plagas] = await Promise.all([
+                territorialModule.getLotes().catch(() => []),
+                territorialModule.getPlagas({}).catch(() => [])
+            ]);
+            this._loteCache = lotes;
+            this._plagaCache = plagas;
+        }
+    }
+
+    // Cargar detalles + plagas de una inspección
+    async _loadDetallesConPlagas(inspId) {
+        const dets = await apiInspecciones.get(Endpoints.INSPECCIONES.DETALLES.LIST(inspId)).catch(() => []);
+        const lista = Array.isArray(dets) ? dets : [];
+        // Cargar plagas de cada detalle en paralelo
+        await Promise.all(lista.map(async det => {
+            const pls = await apiInspecciones.get(
+                Endpoints.INSPECCIONES.DETALLES.PLAGAS.LIST(det.idDetalle || det.id)
+            ).catch(() => []);
+            det._plagas = Array.isArray(pls) ? pls : [];
+        }));
+        return lista;
+    }
+
     async _generar() {
         const fi    = document.getElementById('r-fecha-inicio')?.value;
         const ff    = document.getElementById('r-fecha-fin')?.value;
@@ -1930,32 +2179,45 @@ class ReportesPage extends BasePage {
         const el    = document.getElementById('reporte-resultado');
         if (el) el.innerHTML = `<div class="loading-screen"><div class="spinner"></div><p>Generando reporte técnico...</p></div>`;
         try {
-            // Cargar inspecciones + detalles + lotes + plagas en paralelo
-            const [res, lotes, plagas] = await Promise.all([
-                apiInspecciones.get(Endpoints.INSPECCIONES.LIST),
-                territorialModule.getLotes().catch(() => []),
-                territorialModule.getPlagas({}).catch(() => [])
-            ]);
+            await this._loadBase();
+            const res = await apiInspecciones.get(Endpoints.INSPECCIONES.LIST);
             this._data = Array.isArray(res) ? res : (res?.data ?? res?.content ?? []);
-            this._loteCache = lotes;
-            this._plagaCache = plagas;
             let filtrado = this._data;
             if (fi) filtrado = filtrado.filter(i => i.fechaInspeccion >= fi);
-            if (ff) filtrado = filtrado.filter(i => i.fechaInspeccion <= ff + 'T23:59:59');
+            if (ff) filtrado = filtrado.filter(i => i.fechaInspeccion <= ff);
             if (estado) filtrado = filtrado.filter(i => i.estado === estado);
-            // Cargar detalles de cada inspección (hasta 10 para no saturar)
+            // Cargar detalles + plagas (hasta 15 para no saturar)
             const detailsMap = {};
-            await Promise.all(filtrado.slice(0, 10).map(async insp => {
+            await Promise.all(filtrado.slice(0, 15).map(async insp => {
                 const id = insp.idInspeccion || insp.id;
-                try {
-                    const dets = await apiInspecciones.get(Endpoints.INSPECCIONES.DETALLES.LIST(id)).catch(() => []);
-                    detailsMap[id] = Array.isArray(dets) ? dets : [];
-                } catch { detailsMap[id] = []; }
+                detailsMap[id] = await this._loadDetallesConPlagas(id);
+                // Resolver loteId desde detalles si la inspección no lo tiene
+                if (!insp.idLote && !insp.loteId) {
+                    insp._loteId = detailsMap[id].find(d => d.idLote)?.idLote || null;
+                }
             }));
             this._detallesMap = detailsMap;
             this._renderReporte(filtrado);
         } catch(e) {
             if (el) el.innerHTML = `<div class="error-state"><p>Error al generar reporte: ${e.message}</p></div>`;
+        }
+    }
+
+    // Generar reporte para UNA inspección específica (desde el botón "Informe")
+    async _generarParaInspeccion(inspId) {
+        const el = document.getElementById('reporte-resultado');
+        if (el) el.innerHTML = `<div class="loading-screen"><div class="spinner"></div><p>Cargando informe...</p></div>`;
+        try {
+            await this._loadBase();
+            const insp = await apiInspecciones.get(Endpoints.INSPECCIONES.GET(inspId));
+            const detalles = await this._loadDetallesConPlagas(inspId);
+            if (!insp.idLote && !insp.loteId) {
+                insp._loteId = detalles.find(d => d.idLote)?.idLote || null;
+            }
+            this._detallesMap = { [inspId]: detalles };
+            this._renderReporte([insp]);
+        } catch(e) {
+            if (el) el.innerHTML = `<div class="error-state"><p>Error al cargar informe: ${e.message}</p></div>`;
         }
     }
 
@@ -1966,11 +2228,12 @@ class ReportesPage extends BasePage {
             el.innerHTML = `<div class="empty-state"><div class="empty-state__icon"></div><p>No hay inspecciones en el período seleccionado</p></div>`;
             return;
         }
+        const aprobadas      = data.filter(i => i.estado === 'APROBADA').length;
         const completadas    = data.filter(i => i.estado === 'COMPLETADA').length;
         const pendRevision   = data.filter(i => i.estado === 'PENDIENTE_REVISION').length;
         const enProceso      = data.filter(i => i.estado === 'EN_PROCESO').length;
         const programadas    = data.filter(i => i.estado === 'PROGRAMADA').length;
-        const pctCompletitud = data.length ? Math.round(completadas / data.length * 100) : 0;
+        const pctCompletitud = data.length ? Math.round((aprobadas + completadas) / data.length * 100) : 0;
         const lotes = this._loteCache || [];
         const detallesMap = this._detallesMap || {};
 
@@ -1981,24 +2244,42 @@ class ReportesPage extends BasePage {
             const fecha    = insp.fechaInspeccion
                 ? new Date(insp.fechaInspeccion).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })
                 : '—';
-            const _rLid = insp.idLote || insp.loteId;
+            // Resolver lote (nuevo esquema: puede venir de _loteId)
+            const _rLid = insp.idLote || insp.loteId || insp._loteId
+                || detalles.find(d => d.idLote)?.idLote;
             const loteInfo = _rLid ? lotes.find(l => l.id === _rLid) : null;
             const loteLabel = loteInfo
-                ? `${loteInfo.nombre} — ${loteInfo.cultivoNombre || 'Cultivo'}`
-                : (detallesMap[id]?.[0]?.idLote
-                    ? `Lote #${detallesMap[id][0].idLote} (ver detalle)`
-                    : `Inspección ${insp.tipo || insp.tipoInspeccion || 'Rutinaria'}`);
+                ? `${loteInfo.nombre} — ${loteInfo.cultivoNombre || 'Cultivo hortifrutícola'}`
+                : (_rLid ? `Lote #${_rLid}` : 'Sin lote registrado');
 
-            // Calcular totales de muestreo
-            const totalPlantas  = detalles.reduce((s, d) => s + (d.totalPlantas || d.plantasMuestreadas || 0), 0);
-            const totalAfectadas = detalles.reduce((s, d) => s + (d.plantasAfectadas || 0), 0);
+            // Calcular totales desde DETALLE_PLAGA (datos reales)
+            const todasPlagas = detalles.flatMap(d => d._plagas || []);
+            const totalPlantas   = detalles.reduce((s, d) => s + (d.totalPlantas || d.plantasMuestreadas || 0), 0);
+            const totalAfectadas = todasPlagas.reduce((s, p) => s + (p.plantasAfectadas || 0), 0);
             const incidenciaPct  = totalPlantas > 0 ? ((totalAfectadas / totalPlantas) * 100).toFixed(1) : null;
             const colorInc = incidenciaPct !== null
                 ? (parseFloat(incidenciaPct) >= 20 ? '#ef5350' : parseFloat(incidenciaPct) >= 10 ? '#ffa726' : '#66bb6a')
                 : '#aab4be';
             const nivelInc = incidenciaPct !== null
-                ? (parseFloat(incidenciaPct) >= 20 ? 'INCIDENCIA ALTA' : parseFloat(incidenciaPct) >= 10 ? 'INCIDENCIA MEDIA' : 'INCIDENCIA BAJA')
+                ? (parseFloat(incidenciaPct) >= 20 ? 'ALTA' : parseFloat(incidenciaPct) >= 10 ? 'MEDIA' : 'BAJA')
                 : '—';
+
+            // Agrupar plagas únicas (por idPlaga)
+            const plagasPorId = {};
+            todasPlagas.forEach(p => {
+                const pid = p.idPlaga || p.plagaId || 0;
+                if (!plagasPorId[pid]) {
+                    const cat = this._plagaCache.find(c => c.id === pid);
+                    plagasPorId[pid] = {
+                        nombre: p.nombrePlaga || cat?.nombreComun || ('Plaga #'+pid),
+                        nombreCientifico: p.nombreCientifico || cat?.nombreCientifico || null,
+                        totalAfect: 0, maxIncidencia: 0
+                    };
+                }
+                plagasPorId[pid].totalAfect += (p.plantasAfectadas || 0);
+                plagasPorId[pid].maxIncidencia = Math.max(plagasPorId[pid].maxIncidencia, p.nivelIncidencia || 0);
+            });
+            const plagasUnicas = Object.values(plagasPorId);
 
             const tieneDetalle = detalles.length > 0;
             return `
@@ -2008,54 +2289,91 @@ class ReportesPage extends BasePage {
                         <span class="chip">#${i + 1}</span>
                         <div>
                             <strong>${fecha}</strong>
-                            <div style="font-size:0.78rem;color:#6b7a8d">${insp.numeroInspeccion || insp.codigoIca || ('INSP-'+id)} · ${insp.tipo || insp.tipoInspeccion || 'Rutinaria'}</div>
+                            <div style="font-size:0.78rem;color:#6b7a8d">${insp.numeroInspeccion || insp.codigoIca || ('INSP-'+id)} · ${insp.tipoInspeccion || insp.tipo || 'Rutinaria'}</div>
                         </div>
                     </div>
-                    <div>${this.badgeEstado(insp.estado)}</div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+                        ${this.badgeEstado(insp.estado)}
+                        ${insp.nombreInspector && insp.nombreInspector !== 'Pendiente asignación'
+                            ? `<span style="font-size:0.72rem;color:#6b7a8d">AT: ${insp.nombreInspector}</span>` : ''}
+                    </div>
                 </div>
-                <div class="reporte-insp-lote">${loteLabel}</div>
+                <div class="reporte-insp-lote">
+                    <strong>${loteLabel}</strong>
+                </div>
 
                 ${tieneDetalle ? `
-                <!-- Resultados técnicos del Asistente Técnico -->
                 <div class="reporte-resultados-tecnicos">
-                    <div class="reporte-resultado-header">Resultados Técnicos del Asistente</div>
+                    <div class="reporte-resultado-header">Resultados del Muestreo Fitosanitario</div>
                     <div class="reporte-incidencia-row">
                         <div class="reporte-plantas">
-                            <span style="font-size:1.4rem;font-weight:800">${totalPlantas}</span>
+                            <span style="font-size:1.6rem;font-weight:800;color:#1a2332">${totalPlantas}</span>
                             <span style="font-size:0.72rem;color:#6b7a8d;display:block">Plantas inspeccionadas</span>
                         </div>
                         <div class="reporte-plantas">
-                            <span style="font-size:1.4rem;font-weight:800;color:${colorInc}">${totalAfectadas}</span>
+                            <span style="font-size:1.6rem;font-weight:800;color:${colorInc}">${totalAfectadas}</span>
                             <span style="font-size:0.72rem;color:#6b7a8d;display:block">Plantas afectadas</span>
                         </div>
                         <div class="reporte-incidencia-big" style="color:${colorInc}">
                             <span>${incidenciaPct !== null ? incidenciaPct + '%' : '—'}</span>
-                            <span style="font-size:0.7rem;display:block">${nivelInc}</span>
+                            <span style="font-size:0.72rem;display:block;font-weight:600">INCIDENCIA ${nivelInc}</span>
                         </div>
                     </div>
-                    <!-- Barra visual de incidencia -->
                     ${incidenciaPct !== null ? `
                     <div class="resultado-barra-wrap" style="margin-top:8px">
-                        <div class="resultado-barra-fill"
-                             style="width:${Math.min(parseFloat(incidenciaPct), 100)}%;background:${colorInc}">
-                        </div>
+                        <div class="resultado-barra-fill" style="width:${Math.min(parseFloat(incidenciaPct), 100)}%;background:${colorInc}"></div>
                     </div>` : ''}
-                    <!-- Detalles por muestreo -->
+
+                    <!-- Detalles por muestreo con plagas -->
                     ${detalles.map((d, di) => {
                         const tp = d.totalPlantas || d.plantasMuestreadas || 0;
-                        const ta = d.plantasAfectadas || 0;
-                        const pctd = tp > 0 ? ((ta / tp) * 100).toFixed(1) : '0.0';
-                        return `<div class="reporte-detalle-row">
-                            <span>Muestreo ${di + 1}:</span>
-                            <span>${tp} plantas · ${ta} afectadas · <strong>${pctd}%</strong></span>
+                        const dPlagas = d._plagas || [];
+                        const dAfect = dPlagas.reduce((s, p) => s + (p.plantasAfectadas || 0), 0);
+                        const pctd = tp > 0 ? ((dAfect / tp) * 100).toFixed(1) : '0.0';
+                        const colD = parseFloat(pctd) >= 20 ? '#ef5350' : parseFloat(pctd) >= 10 ? '#ffa726' : '#66bb6a';
+                        const loteDetalle = d.idLote ? (lotes.find(l=>l.id===d.idLote)?.nombre || 'Lote #'+d.idLote) : '';
+                        return `<div class="reporte-detalle-row" style="border-top:1px solid #f0f2f5;margin-top:6px;padding-top:6px">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <span style="font-weight:600;font-size:0.83rem">Muestreo ${di+1}${loteDetalle ? ' — '+loteDetalle : ''}</span>
+                                <span style="color:${colD};font-weight:700">${pctd}%</span>
+                            </div>
+                            <div style="font-size:0.78rem;color:#6b7a8d;margin-top:2px">${tp} plantas · ${dAfect} afectadas · ${dPlagas.length} plaga${dPlagas.length!==1?'s':''} detectada${dPlagas.length!==1?'s':''}</div>
+                            ${dPlagas.length > 0 ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">
+                                ${dPlagas.map(p => {
+                                    const cat = this._plagaCache.find(c => c.id === (p.idPlaga||p.plagaId));
+                                    const nom = p.nombrePlaga || cat?.nombreComun || 'Plaga';
+                                    const inc = tp > 0 ? ((p.plantasAfectadas/tp)*100).toFixed(1) : '0.0';
+                                    const colP = parseFloat(inc)>=20?'#ef5350':parseFloat(inc)>=10?'#ffa726':'#66bb6a';
+                                    return `<span style="background:#f8f9ff;border:1px solid #e0e4ee;border-radius:20px;padding:2px 8px;font-size:0.72rem;color:#1a2332">
+                                        ${nom} <strong style="color:${colP}">${inc}%</strong>
+                                    </span>`;
+                                }).join('')}
+                            </div>` : ''}
                         </div>`;
                     }).join('')}
+
+                    <!-- Resumen plagas únicas -->
+                    ${plagasUnicas.length > 0 ? `
+                    <div style="margin-top:12px;padding-top:10px;border-top:2px solid #e8ecf0">
+                        <div style="font-size:0.72rem;font-weight:700;color:#6b7a8d;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Plagas Detectadas (${plagasUnicas.length})</div>
+                        ${plagasUnicas.map(p => {
+                            const pct = totalPlantas > 0 ? ((p.totalAfect/totalPlantas)*100).toFixed(1) : '0.0';
+                            const col = parseFloat(pct)>=20?'#ef5350':parseFloat(pct)>=10?'#ffa726':'#66bb6a';
+                            return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5;font-size:0.82rem">
+                                <div>
+                                    <strong>${p.nombre}</strong>
+                                    ${p.nombreCientifico ? `<em style="color:#8a94a6;font-size:0.72rem;margin-left:4px">${p.nombreCientifico}</em>` : ''}
+                                </div>
+                                <span style="color:${col};font-weight:700;white-space:nowrap">${pct}% · ${p.totalAfect} plantas</span>
+                            </div>`;
+                        }).join('')}
+                    </div>` : ''}
                 </div>` : `
                 <div class="reporte-sin-detalle">
-                    <span>Sin datos de muestreo registrados</span>
+                    <span>Sin datos de muestreo registrados aún</span>
                 </div>`}
 
-                ${insp.observaciones ? `<div class="reporte-obs">${insp.observaciones}</div>` : ''}
+                ${insp.observaciones ? `<div class="reporte-obs"><strong>Observaciones:</strong> ${insp.observaciones}</div>` : ''}
             </div>`;
         }).join('');
 
@@ -2069,7 +2387,7 @@ class ReportesPage extends BasePage {
                         <div class="report-stat__lbl">Total</div>
                     </div>
                     <div class="report-stat" style="background:#e8f5e9">
-                        <div class="report-stat__val" style="color:#2e7d32">${completadas}</div>
+                        <div class="report-stat__val" style="color:#2e7d32">${aprobadas}</div>
                         <div class="report-stat__lbl">Aprobadas</div>
                     </div>
                     <div class="report-stat" style="background:#fff8e1">
@@ -2127,4 +2445,9 @@ Object.assign(window, {
     usuariosPage, departamentosPage, municipiosPage, lugaresPage,
     prediosPage, cultivosPage, lotesPage, plagasPage,
     inspeccionesPage, inspeccionDetallePage, reportesPage
+});
+
+// Cerrar dropdowns de acciones al hacer clic fuera
+document.addEventListener('click', () => {
+    document.querySelectorAll('.actions-dropdown.open').forEach(d => d.classList.remove('open'));
 });

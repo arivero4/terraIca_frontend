@@ -242,6 +242,8 @@ const Endpoints = {
         COMPLETAR: (id) => `/inspecciones/${id}/completar`,
         CANCELAR:  (id) => `/inspecciones/${id}/cancelar`,
         REVISION:  (id) => `/inspecciones/${id}/revision`,
+        APROBAR:   (id) => `/inspecciones/${id}/aprobar`,
+        DEVOLVER:  (id) => `/inspecciones/${id}/devolver`,
         DETALLES: {
             LIST:   (inspeccionId) => `/inspecciones/${inspeccionId}/detalles`,
             GET:    (detalleId) => `/detalles/${detalleId}`,
